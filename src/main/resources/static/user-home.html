@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户中心 - 爱租车</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        body { background: var(--gray-50); }
+        .topbar {
+            background: #fff; border-bottom: 1px solid var(--gray-200);
+            padding: 0 2rem; height: 64px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar .brand { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.5rem; color: var(--dark); }
+        .topbar .brand i { color: var(--accent); }
+        .topbar nav { display: flex; gap: 2rem; }
+        .topbar nav a {
+            font-size: 0.875rem; font-weight: 500; color: var(--gray-500); text-decoration: none;
+            padding: 0.5rem 0; border-bottom: 2px solid transparent; transition: all 0.2s; cursor: pointer;
+        }
+        .topbar nav a:hover, .topbar nav a.active { color: var(--dark); border-bottom-color: var(--primary); }
+        .topbar .user-area { display: flex; align-items: center; gap: 1rem; }
+        .topbar .user-area .greeting { font-size: 0.875rem; color: var(--gray-500); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .hero-welcome {
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            border-radius: var(--radius-lg); padding: 2.5rem; color: #fff;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;
+        }
+        .hero-welcome h1 { font-size: 1.75rem; }
+        .hero-welcome p { opacity: 0.8; margin-top: 0.25rem; font-size: 0.9375rem; }
+        .hero-welcome .pts { text-align: right; }
+        .hero-welcome .pts .num { font-size: 2.5rem; font-weight: 800; }
+        .hero-welcome .pts .lbl { font-size: 0.75rem; opacity: 0.7; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-grid .stat-card {
+            background: #fff; border-radius: var(--radius); padding: 1.25rem; text-align: center;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100);
+        }
+        .stat-grid .stat-card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stat-grid .stat-card .num { font-size: 1.75rem; font-weight: 700; color: var(--dark); }
+        .stat-grid .stat-card .lbl { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .section-title { font-size: 1.125rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem; }
+        .quick-actions { display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+        .v-card {
+            background: #fff; border-radius: var(--radius); overflow: hidden;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100); transition: all 0.2s;
+        }
+        .v-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .v-card .v-img { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: var(--gray-100); background-size: cover; background-position: center; }
+        .v-card .v-body { padding: 1rem; }
+        .v-card .v-body .v-name { font-weight: 700; }
+        .v-card .v-body .v-meta { font-size: 0.75rem; color: var(--gray-400); margin: 0.25rem 0; }
+        .v-card .v-body .v-price { font-size: 1.25rem; font-weight: 700; color: var(--danger); }
+        .v-card .v-body .v-price small { font-size: 0.75rem; font-weight: 400; color: var(--gray-400); }
+        .empty-state { text-align: center; padding: 3rem; color: var(--gray-400); }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+        @media (max-width: 768px) {
+            .topbar nav { gap: 1rem; }
+            .hero-welcome { flex-direction: column; text-align: center; }
+            .hero-welcome .pts { margin-top: 1rem; text-align: center; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <div class="brand"><i class="fas fa-car"></i> 爱租车</div>
+    <nav>
+        <a class="active" onclick="showSection('home')">🏠 首页</a>
+        <a onclick="showSection('orders')">📋 订单</a>
+        <a onclick="showSection('vehicles')">🚗 选车</a>
+        <a onclick="showSection('violations')">⚠️ 违章</a>
+        <a onclick="showSection('profile')">👤 我的</a>
+    </nav>
+    <div class="user-area">
+        <span class="greeting" id="userGreeting">你好</span>
+        <div class="avatar avatar-primary avatar-sm" id="userAvatar">U</div>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>
+    </div>
+</div>
+<div class="container" id="mainContent"></div>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="confirmOverlay">
+    <div class="modal" style="max-width:400px;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem;" id="confirmIcon"></div>
+        <h3 style="margin-bottom:0.5rem;" id="confirmTitle"></h3>
+        <p style="color:var(--gray-400);font-size:0.9375rem;margin-bottom:1.5rem;" id="confirmMsg"></p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button class="btn btn-outline" onclick="resolveConfirm(false)">取消</button>
+            <button class="btn btn-danger" id="confirmOkBtn" onclick="resolveConfirm(true)">确认</button>
+        </div>
+    </div>
+</div>
+<script>
+const API = ''; let USER = null, userPhone = '';
+(function(){
+    const u = sessionStorage.getItem('user'); if(!u){window.location.href='/login.html';return;}
+    USER = JSON.parse(u); userPhone = USER.phone||'';
+    document.getElementById('userGreeting').textContent = 'Hi, '+(USER.realName||USER.username);
+    document.getElementById('userAvatar').textContent = (USER.realName||USER.username||'U')[0];
+    showSection('home');
+})();
+let _confirmResolve = null;
+function showConfirm(title, msg, icon, okText, okClass) {
+    icon = icon || '⚠️'; okText = okText || '确认'; okClass = okClass || 'btn-danger';
+    document.getElementById('confirmIcon').textContent = icon;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = msg;
+    const b = document.getElementById('confirmOkBtn'); b.textContent = okText; b.className = 'btn ' + okClass;
+    document.getElementById('confirmOverlay').classList.add('active');
+    return new Promise(r => { _confirmResolve = r; });
+}
+function resolveConfirm(r) { document.getElementById('confirmOverlay').classList.remove('active'); if(_confirmResolve){_confirmResolve(!!r);_confirmResolve=null;} }
+document.getElementById('confirmOverlay').addEventListener('click', function(e) { if(e.target===this) resolveConfirm(false); });
+async function logout(){
+    const ok = await showConfirm('退出登录', '确定要退出当前账号吗？', '👋', '退出', 'btn-danger');
+    if (ok) { sessionStorage.clear(); window.location.href = '/login.html'; }
+}
+function toast(m, t){ const e=document.getElementById('toast'); e.textContent=m; e.className='toast '+(t||'success'); e.style.display='block'; setTimeout(()=>e.style.display='none',3000); }
+function showSection(s){
+    document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+    document.querySelector('nav a[onclick*="'+s+'"]')?.classList.add('active');
+    const c=document.getElementById('mainContent');
+    if(s==='home') renderHome(c); else if(s==='orders') renderOrders(c); else if(s==='vehicles') renderVehicles(c); else if(s==='violations') renderViolations(c); else if(s==='profile') renderProfile(c);
+}
+async function $get(u){ const r=await fetch(API+u); return r.json(); }
+async function renderHome(c){
+    let orders=[], viols=[], points=0;
+    try { const r=await $get('/api/order/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) orders=r.data; } catch{}
+    try { const r=await $get('/api/violation/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) viols=r.data; } catch{}
+    try { const r=await $get('/api/customer/list?phone='+(userPhone||'')); if(r.code===200&&r.data&&r.data.length) points=r.data[0].points||0; } catch{}
+    const pending = viols.filter(v=>v.status==='PENDING').length;
+    c.innerHTML = `
+        <div class="hero-welcome">
+            <div><h1>👋 欢迎回来，${USER.realName||USER.username}</h1><p>爱租车祝您出行愉快</p></div>
+            <div class="pts"><div class="lbl">🏆 会员积分</div><div class="num">${points}</div></div>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-card"><div class="icon">📋</div><div class="num">${orders.length}</div><div class="lbl">历史订单</div></div>
+            <div class="stat-card"><div class="icon">⚠️</div><div class="num">${pending}</div><div class="lbl">待处理违章</div></div>
+            <div class="stat-card"><div class="icon">⭐</div><div class="num">${points}</div><div class="lbl">可用积分</div></div>
+            <div class="stat-card"><div class="icon">🚗</div><div class="num">租车</div><div class="lbl">立即出发</div></div>
+        </div>
+        <div class="section-title">⚡ 快捷操作</div>
+        <div class="quick-actions">
+            <button class="btn btn-primary" onclick="showSection('vehicles')"><i class="fas fa-car-side"></i> 浏览可租车辆</button>
+            <button class="btn btn-outline" onclick="showSection('orders')"><i class="fas fa-list"></i> 查看我的订单</button>
+            <button class="btn btn-outline" onclick="showSection('profile')"><i class="fas fa-user-edit"></i> 个人信息</button>
+        </div>`;
+}
+async function renderOrders(c){
+    c.innerHTML = '<p class="empty-state"><i class="fas fa-spinner fa-spin"></i>加载中...</p>';
+    let orders=[]; const m={PENDING:'待取车',PICKED_UP:'已取车',RETURNED:'已还车',CANCELLED:'已取消',COMPLETED:'已完成'}, cl={PENDING:'amber',PICKED_UP:'blue',RETURNED:'green',CANCELLED:'red',COMPLETED:'green'};
+    try { const r=await $get('/api/order/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) orders=r.data||[]; } catch{}
+    c.innerHTML = '<h2 class="section-title">📋 我的订单</h2>'+
+        (orders.length===0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>暂无订单记录</p></div>' :
+        '<div class="table-wrapper"><table><thead><tr><th>订单号</th><th>车辆</th><th>取车</th><th>还车</th><th>天数</th><th>金额</th><th>状态</th></tr></thead><tbody>'+
+        orders.map(o=>'<tr><td><strong>'+ (o.orderNo||'-') +'</strong></td><td>'+ (o.vehicleBrand||'') +' '+ (o.vehicleModel||'') +'</td><td>'+ (o.pickupTime||'-') +'</td><td>'+ (o.returnTime||'-') +'</td><td>'+ (o.rentDays||0) +'天</td><td>¥'+ (o.finalAmount||o.totalAmount||0) +'</td><td><span class="badge badge-'+ (cl[o.status]||'gray') +'">'+ (m[o.status]||o.status) +'</span></td></tr>').join('')+
+        '</tbody></table></div>');
+}
+async function renderVehicles(c){
+    c.innerHTML = '<p class="empty-state"><i class="fas fa-spinner fa-spin"></i>加载中...</p>';
+    let vehicles=[]; const sm={AVAILABLE:'可用',RENTED:'已租',REPAIR:'维修中',OFFLINE:'下架'};
+    try { const r=await $get('/api/vehicle/list'); if(r.code===200) vehicles=(r.data||[]).filter(v=>v.status==='AVAILABLE'); } catch{}
+    c.innerHTML = '<h2 class="section-title">🚗 可租车辆 <span class="badge badge-green" style="vertical-align:middle;">'+vehicles.length+' 辆</span></h2>'+
+        '<div class="vehicle-grid">'+vehicles.map(v=>{
+            const img=v.imageUrls?v.imageUrls.split(',')[0].trim():null;
+            const hasImg=img&&(img.startsWith('/uploads/')||img.startsWith('http'));
+            return '<div class="v-card"><div class="v-img" style="'+ (hasImg?'background-image:url('+img+');background-size:cover;':'') +'">'+(hasImg?'':'🚗')+'</div>'+
+            '<div class="v-body"><div class="v-name">'+(v.brand||'')+' '+(v.model||'')+'</div><div class="v-meta">'+(v.plateNumber||'')+' · '+(v.color||'')+' · '+(v.seatCount||0)+'座</div>'+
+            '<div class="v-price">¥'+(v.dailyPrice||0)+'<small>/日</small></div></div></div>';
+        }).join('')+'</div>'+
+        (vehicles.length===0?'<div class="empty-state"><i class="fas fa-car-side"></i><p>暂无可用车辆</p></div>':'');
+}
+async function renderViolations(c){
+    c.innerHTML = '<p class="empty-state"><i class="fas fa-spinner fa-spin"></i>加载中...</p>';
+    let viols=[];
+    try { const r=await $get('/api/violation/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) viols=r.data||[]; } catch{}
+    c.innerHTML = '<h2 class="section-title">⚠️ 违章记录</h2>'+
+        (viols.length===0 ? '<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--success);"></i><p>没有违章记录 🎉</p></div>' :
+        '<div class="table-wrapper"><table><thead><tr><th>订单号</th><th>车牌</th><th>时间</th><th>地点</th><th>扣分</th><th>罚款</th><th>状态</th></tr></thead><tbody>'+
+        viols.map(v=>'<tr><td>'+ (v.orderNo||'-') +'</td><td>'+ (v.vehiclePlate||'-') +'</td><td>'+ (v.violationTime||'-') +'</td><td>'+ (v.location||'-') +'</td><td style="color:var(--danger);font-weight:600;">'+ (v.points||0) +'分</td><td style="color:var(--danger);">¥'+ (v.fineAmount||0) +'</td><td><span class="badge badge-'+(v.status==='RESOLVED'?'green':'amber')+'">'+(v.status==='RESOLVED'?'已处理':'待处理')+'</span></td></tr>').join('')+
+        '</tbody></table></div>');
+}
+async function renderProfile(c){
+    let customer=null;
+    try { const r=await $get('/api/customer/list?phone='+(userPhone||'')); if(r.code===200&&r.data&&r.data.length) customer=r.data[0]; } catch{}
+    c.innerHTML = '<h2 class="section-title">👤 个人信息</h2>'+
+        '<div class="grid-2" style="max-width:800px;">'+
+        '<div class="card"><h3 style="margin-bottom:1rem;">🔐 账号信息</h3><div style="display:grid;gap:0.75rem;font-size:0.875rem;">'+
+        '<div><span class="text-muted">用户名</span><br><strong>'+ (USER.username||'-') +'</strong></div>'+
+        '<div><span class="text-muted">角色</span><br><span class="badge badge-blue">注册客户</span></div>'+
+        '<div><span class="text-muted">最后登录</span><br>'+ (USER.lastLoginTime||'暂无') +'</div>'+
+        '<div><span class="text-muted">登录IP</span><br>'+ (USER.lastLoginIp||'暂无') +'</div></div></div>'+
+        '<div class="card"><h3 style="margin-bottom:1rem;">🪪 客户档案</h3>'+(customer?'<div style="display:grid;gap:0.75rem;font-size:0.875rem;">'+
+        '<div><span class="text-muted">姓名</span><br><strong>'+ (customer.name||'-') +'</strong></div>'+
+        '<div><span class="text-muted">手机号</span><br>'+ (customer.phone||'-') +'</div>'+
+        '<div><span class="text-muted">积分</span><br><strong style="color:var(--primary);">'+ (customer.points||0) +'</strong></div>'+
+        '<div><span class="text-muted">状态</span><br><span class="badge '+(customer.status==='BLACKLIST'?'badge-red':'badge-green')+'">'+(customer.status==='BLACKLIST'?'黑名单':'正常')+'</span></div>'+
+        '</div>':'<p class="text-muted">暂无客户档案</p>')+'</div></div>';
+}
+</script>
+</body>
+</html>
