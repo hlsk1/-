@@ -2,7 +2,7 @@
 
 | 项目名称 | 爱租车汽车租赁管理系统 |
 | :------- | :--------------------- |
-| 文档版本 | V4.7                   |
+| 文档版本 | V5.4                   |
 | 编制日期 | 2026-07-13             |
 | 文档状态 | 正式发布版             |
 
@@ -913,5 +913,10 @@ mvn spring-boot:run
 | V4.5 | 2026-07-13 | 新增用户评价系统：Review实体+Repository+Service+Controller（/api/review/增删改查+点赞+浏览计数）；reviews.html评价展示页（星级评分/点赞/浏览数/用户昵称/车辆型号/订单号）；仅完成订单后才能评价且每单限评一次；user-home已完成的订单增加"去评价"按钮 | [姓名] |
 | V4.6 | 2026-07-13 | 修复评价无法提交：reviews.html增加URL参数解析(action=write自动打开评价表单)；goReview改用直接跳转(window.location.href)替代window.open避免浏览器弹窗拦截 | [姓名] |
 | V4.7 | 2026-07-13 | 点赞防刷：localStorage记录已点赞reviewId列表，每人每帖只能点赞一次；已赞过的帖子显示"已赞"标记且按钮禁用；页面刷新后状态保持 | [姓名] |
+| V5.0 | 2026-07-13 | 全新Vite+Vue3+TypeScript前端项目(Rent-Vue/RentSys)：vue-router路由(12条)、axios API封装、Vite代理到SpringBoot 8081、构建输出到static/；核心页面：HomePage(品牌首页)、LoginPage(双标签登录)、RegisterPage、Admin Dashboard(侧边栏+车辆CRUD)、AboutPage；旧HTML页面保留兼容 | [姓名] |
+| V5.1 | 2026-07-13 | 管理后台全功能迁移：Dashboard(7模块+统计卡片+车辆/客户/订单/违章/用户完整CRUD+8个内联Modal表单组件)、用户管理(增删改+重置密码)、车辆管理(新增编辑+维修流程+导出)、客户管理(增删改+积分+黑名单)、订单管理(创建+取车+还车+取消+标记异常)、违章管理(新增+处理完成)；构建包从5KB增长至17KB | [姓名] |
+| V5.2 | 2026-07-13 | 用户中心全功能迁移：5Tab导航(首页/订单/选车/违章/我的)、订单管理(查看+取消+详情弹窗+完成评价)、车辆浏览(卡片视图+立即租用+时间选择+自动计算费用+下单)、个人信息(查看+编辑档案保存)、违章记录查看 | [姓名] |
+| V5.3 | 2026-07-15 | 管理后台全面修复：Modal改用reactive表单替代defineComponent(修复空白bug)、车辆卡片视图恢复(列表/卡片切换)、Dashboard集成ECharts(收入趋势折线图+车辆状态饼图)、导出按钮恢复、const重赋值错误修复 | [姓名] |
+| V5.4 | 2026-07-15 | 功能补全：车辆表单增加图片上传(多图选择+预览+FormData上传)、HomePage首页增加API车型展示(卡片网格+背景图)、VehicleDetail车辆详情页(API加载)、ReviewsPage评价列表页、ContactPage联系页(留言表单)、ForgotPwdPage忘记密码页；全部桩页面补全 | [姓名] |
 
 **文档结束**

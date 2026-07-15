@@ -3,6 +3,7 @@ package com.aizuche.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.File;
@@ -29,5 +30,12 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadPath);
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        // Vue SPA fallback: 将所有非API、非静态资源的路径转发到index.html
+        registry.addViewController("/admin").setViewName("forward:/index.html");
+        registry.addViewController("/user").setViewName("forward:/index.html");
     }
 }
