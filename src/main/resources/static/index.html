@@ -4,1899 +4,558 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>爱租车 · 管理后台</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/common.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+    <script>if(typeof Vue==='undefined'){ document.write('<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"><\/script>'); }</script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
-        body { display: flex; min-height: 100vh; color: var(--gray-800); }
-        .sidebar {
-            width: 240px; background: linear-gradient(180deg, var(--dark) 0%, #1e3a5f 100%);
-            color: #fff; display: flex; flex-direction: column; min-height: 100vh;
-            position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
-        }
-        .sidebar-brand {
-            padding: 1.5rem 1.25rem; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.04em;
-            border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.75rem;
-        }
-        .sidebar-brand i { font-size: 1.5rem; color: var(--accent); }
-        .sidebar-menu { flex: 1; padding: 1rem 0; overflow-y: auto; }
-        .sidebar-menu .menu-title { padding: 0.75rem 1.5rem; font-size: 0.6875rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-        .sidebar-menu .menu-item {
-            display: flex; align-items: center; padding: 0.625rem 1.5rem; cursor: pointer;
-            transition: all 0.15s; border-left: 3px solid transparent;
-            color: rgba(255,255,255,0.65); text-decoration: none; gap: 0.75rem; font-size: 0.875rem;
-        }
-        .sidebar-menu .menu-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-        .sidebar-menu .menu-item.active { background: rgba(255,255,255,0.1); color: var(--accent); border-left-color: var(--accent); }
-        .sidebar-footer {
-            padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);
-            display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: rgba(255,255,255,0.55);
-        }
-        .sidebar-footer .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--dark); font-weight: 700; font-size: 0.875rem; }
-        .main-content { flex: 1; margin-left: 240px; min-height: 100vh; }
-        .topbar { background: #fff; padding: 0.875rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-200); position: sticky; top: 0; z-index: 50; }
-        .topbar .page-title { font-size: 1.125rem; font-weight: 700; color: var(--dark); }
-        .topbar-actions { display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; }
-        .page-content { padding: 1.5rem 2rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card { background: #fff; border-radius: var(--radius); padding: 1.25rem 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100); border-left: 4px solid var(--primary); transition: box-shadow 0.15s; }
-        .stat-card:hover { box-shadow: var(--shadow-md); }
-        .stat-card.gold { border-left-color: var(--accent); }
-        .stat-card.green { border-left-color: var(--success); }
-        .stat-card.purple { border-left-color: #7c3aed; }
-        .stat-card .label { font-size: 0.8125rem; color: var(--gray-400); margin-bottom: 0.375rem; }
-        .stat-card .value { font-size: 1.75rem; font-weight: 700; color: var(--dark); }
-        .action-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1.25rem; background: #fff; padding: 1rem 1.25rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100); }
-        .action-bar .search-input, .action-bar select { padding: 0.5rem 0.75rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.875rem; outline: none; }
-        .action-bar .search-input { flex: 1; min-width: 160px; }
-        .action-bar .search-input:focus, .action-bar select:focus { border-color: var(--primary); }
-        .table-container { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        table thead { background: var(--gray-50); }
-        table th { padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--gray-500); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
-        table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100); color: var(--gray-700); }
-        table tbody tr:hover { background: var(--gray-50); }
-        .status-badge { padding: 2px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; display: inline-block; }
-        .status-badge.available, .status-badge.completed, .status-badge.returned, .status-badge.normal, .status-badge.resolved { background: #ecfdf5; color: #059669; }
-        .status-badge.rented, .status-badge.picked_up { background: #eff6ff; color: #2563eb; }
-        .status-badge.repair, .status-badge.pending { background: #fffbeb; color: #d97706; }
-        .status-badge.offline { background: #f8fafc; color: #64748b; }
-        .status-badge.cancelled, .status-badge.blacklist { background: #fef2f2; color: #dc2626; }
-        .table-actions { display: flex; gap: 4px; flex-wrap: wrap; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: all 0.15s; }
-        .btn-sm.btn-primary { background: var(--primary); color: #fff; }
-        .btn-sm.btn-primary:hover { background: var(--primary-dark); }
-        .btn-sm.btn-success { background: var(--success); color: #fff; }
-        .btn-sm.btn-success:hover { background: #059669; }
-        .btn-sm.btn-danger { background: var(--danger); color: #fff; }
-        .btn-sm.btn-danger:hover { background: #dc2626; }
-        .btn-sm.btn-warning { background: var(--warning); color: #fff; }
-        .btn-sm.btn-warning:hover { background: #d97706; }
-        .btn-sm.btn-outline { background: #fff; border: 1px solid var(--gray-300); color: var(--gray-600); }
-        .btn-sm.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-overlay.active { display: flex; }
-        .modal { background: #fff; border-radius: var(--radius-xl); padding: 2rem; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-xl); animation: scaleIn 0.2s ease; }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .modal .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .modal .modal-header h3 { font-size: 1.125rem; color: var(--dark); }
-        .modal .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-400); }
-        .modal .modal-close:hover { color: var(--gray-700); }
-        .form-group { margin-bottom: 1.125rem; }
-        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.375rem; }
-        .form-group label .required { color: var(--danger); }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.625rem 0.75rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); }
-        .toast { position: fixed; top: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem; color: #fff; border-radius: var(--radius-sm); z-index: 300; display: none; box-shadow: var(--shadow-lg); font-size: 0.875rem; animation: slideDown 0.3s ease; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .toast.success { background: var(--success); }
-        .toast.error { background: var(--danger); }
-        .toast.warning { background: var(--warning); }
-        .loading { text-align: center; padding: 3rem; color: var(--gray-400); }
-        .loading i { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
-        .view-toggle button { padding: 6px 14px; border: 1px solid var(--gray-200); border-radius: 6px; background: #fff; cursor: pointer; font-size: 0.8125rem; color: var(--gray-600); transition: all 0.15s; }
-        .view-toggle button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        @media (max-width: 768px) {
-            .sidebar { width: 60px; }
-            .sidebar-brand span, .sidebar-menu .menu-item span, .sidebar-menu .menu-title, .sidebar-footer .name { display: none; }
-            .sidebar-brand { justify-content: center; padding: 1rem; }
-            .main-content { margin-left: 60px; }
-            .sidebar-menu .menu-item { justify-content: center; padding: 0.75rem; }
-            .sidebar-footer { justify-content: center; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .form-row { grid-template-columns: 1fr; }
-            .page-content { padding: 1rem; }
-            .topbar { padding: 0.75rem 1rem; }
-        }
+        :root { --bg: #f1f5f9; --side-w: 240px; --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a; --danger: #dc2626; --warning: #d97706; --text: #1e293b; --text-muted: #94a3b8; --border: #e2e8f0; --card-bg: #fff; --radius: 10px; }
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); display:flex; min-height:100vh; }
+        #app { flex: 1; display: flex; flex-direction: column; }
+        a { color: var(--primary); text-decoration: none; }
+
+        /* Sidebar */
+        .sidebar { width: var(--side-w); background: #0f172a; color: #fff; position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; z-index: 100; }
+        .sidebar-brand { padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 0.625rem; border-bottom: 1px solid rgba(255,255,255,.06); }
+        .sidebar-brand .logo { width: 36px; height: 36px; background: linear-gradient(135deg,#f59e0b,#fbbf24); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; color: #0f172a; }
+        .sidebar-brand .name { font-weight: 700; font-size: 1rem; letter-spacing: .04em; }
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: .75rem 0; }
+        .sidebar-nav .nav-section { padding: .75rem 1.5rem .25rem; font-size: .625rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.25); font-weight: 600; }
+        .sidebar-nav .nav-item { display: flex; align-items: center; gap: .625rem; padding: .5rem 1.5rem; margin: 2px .75rem; border-radius: 6px; cursor: pointer; font-size: .875rem; color: rgba(255,255,255,.55); transition: all .15s; border-left: 0; }
+        .sidebar-nav .nav-item:hover { background: rgba(255,255,255,.05); color: rgba(255,255,255,.8); }
+        .sidebar-nav .nav-item.active { background: rgba(37,99,235,.25); color: #60a5fa; font-weight: 500; }
+        .sidebar-nav .nav-item .icon { width: 20px; text-align: center; font-size: .875rem; }
+        .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,.06); display: flex; align-items: center; gap: .625rem; font-size: .8125rem; color: rgba(255,255,255,.45); }
+        .sidebar-footer .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; color: #fff; }
+
+        /* Main */
+        .main { flex: 1; margin-left: var(--side-w); min-height: 100vh; }
+        .topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+        .topbar .breadcrumb { font-size: .8125rem; color: var(--text-muted); display: flex; align-items: center; gap: .375rem; }
+        .topbar .breadcrumb span.current { color: var(--text); font-weight: 600; }
+        .topbar .time { font-size: .8125rem; color: var(--text-muted); }
+        .page-content { padding: 1.5rem; }
+
+        /* Stats */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 1.125rem 1.25rem; border: 1px solid var(--border); display: flex; align-items: center; gap: .875rem; }
+        .stat-card .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; flex-shrink: 0; }
+        .stat-card .stat-info .stat-val { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+        .stat-card .stat-info .stat-lbl { font-size: .75rem; color: var(--text-muted); }
+
+        /* Toolbar & Table */
+        .toolbar { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem 1rem; margin-bottom: 1rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+        .toolbar input, .toolbar select { padding: .4375rem .625rem; border: 1px solid var(--border); border-radius: 6px; font-size: .8125rem; outline: none; }
+        .toolbar input:focus, .toolbar select:focus { border-color: var(--primary); }
+        .toolbar input { flex: 1; min-width: 140px; }
+        .table-wrap { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: .8125rem; }
+        table th { background: #f8fafc; padding: .625rem .875rem; text-align: left; font-weight: 600; font-size: .6875rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        table td { padding: .5625rem .875rem; border-bottom: 1px solid #f1f5f9; }
+        table tr:hover td { background: #f8fafc; }
+        .badge { display: inline-block; padding: 1px 8px; border-radius: 100px; font-size: .6875rem; font-weight: 500; }
+        .badge-blue { background: #eff6ff; color: #2563eb; }
+        .badge-green { background: #f0fdf4; color: #16a34a; }
+        .badge-amber { background: #fffbeb; color: #d97706; }
+        .badge-red { background: #fef2f2; color: #dc2626; }
+        .badge-gray { background: #f8fafc; color: #64748b; }
+
+        /* Card Grid */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+        .v-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all .15s; }
+        .v-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,.08); }
+        .v-card .v-img { height: 150px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background-size: cover; background-position: center; }
+        .v-card .v-info { padding: .875rem; }
+        .v-card .v-info .name { font-weight: 600; font-size: .9375rem; }
+        .v-card .v-info .meta { font-size: .75rem; color: var(--text-muted); margin: .25rem 0; }
+        .v-card .v-info .footer { display: flex; justify-content: space-between; align-items: center; margin-top: .5rem; }
+        .v-card .v-info .price { font-weight: 700; color: var(--danger); font-size: 1.125rem; }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; gap: 4px; padding: .4375rem .875rem; border-radius: 6px; border: none; font-size: .8125rem; font-weight: 500; cursor: pointer; transition: all .15s; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-primary { background: var(--primary); color: #fff; } .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: var(--success); color: #fff; } .btn-success:hover { background: #15803d; }
+        .btn-danger { background: var(--danger); color: #fff; } .btn-danger:hover { background: #b91c1c; }
+        .btn-warning { background: var(--warning); color: #fff; } .btn-warning:hover { background: #b45309; }
+        .btn-outline { border: 1px solid var(--border); background: #fff; color: var(--text); } .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-xs { padding: 2px 8px; font-size: .6875rem; border-radius: 4px; }
+
+        .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+        .modal-box { background: #fff; border-radius: 14px; padding: 1.5rem; width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,.15); }
+        .modal-box h3 { font-size: 1rem; margin-bottom: 1rem; }
+        .form-label { display: block; font-size: .8125rem; font-weight: 600; margin-bottom: .25rem; color: var(--text); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: .5rem .625rem; border: 1px solid var(--border); border-radius: 6px; font-size: .8125rem; font-family: inherit; outline: none; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+        .form-textarea { min-height: 70px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+        .form-group { margin-bottom: .875rem; }
+        .form-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; padding-top: .875rem; border-top: 1px solid var(--border); }
+        .toast { position: fixed; top: 1rem; right: 1rem; padding: .625rem 1rem; border-radius: 8px; color: #fff; font-size: .8125rem; z-index: 300; box-shadow: 0 4px 12px rgba(0,0,0,.15); animation: toastIn .25s ease; }
+        @keyframes toastIn { from { opacity:0;transform:translateY(-8px); } to { opacity:1;transform:translateY(0); } }
+        .empty { text-align: center; padding: 3rem; color: var(--text-muted); font-size: .875rem; }
+        .loading-spin { text-align: center; padding: 2rem; color: var(--text-muted); }
+        @media (max-width: 768px) { .sidebar { width: 56px; } .sidebar-brand .name, .sidebar-nav .nav-item span, .sidebar-nav .nav-section, .sidebar-footer .info { display: none; } .sidebar-nav .nav-item { justify-content: center; padding: .5rem; margin: 2px .25rem; } .main { margin-left: 56px; } .form-row { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
 
-<!-- 侧边栏 -->
-<nav class="sidebar">
-    <div class="sidebar-brand">
-        <i class="fas fa-car"></i>
-        <span>爱租车</span>
-    </div>
-    <div class="sidebar-menu">
-        <div class="menu-title">导航</div>
-        <a class="menu-item active" data-page="dashboard" onclick="showPage('dashboard')">
-            <i class="fas fa-chart-pie"></i><span>数据看板</span>
-        </a>
-        <a class="menu-item" data-page="vehicles" onclick="showPage('vehicles')">
-            <i class="fas fa-car-side"></i><span>车辆管理</span>
-        </a>
-        <a class="menu-item" data-page="customers" onclick="showPage('customers')">
-            <i class="fas fa-users"></i><span>客户管理</span>
-        </a>
-        <a class="menu-item" data-page="orders" onclick="showPage('orders')">
-            <i class="fas fa-file-invoice"></i><span>订单管理</span>
-        </a>
-        <a class="menu-item" data-page="violations" onclick="showPage('violations')">
-            <i class="fas fa-exclamation-triangle"></i><span>违章管理</span>
-        </a>
-        <a class="menu-item" data-page="statistics" onclick="showPage('statistics')">
-            <i class="fas fa-chart-bar"></i><span>统计报表</span>
-        </a>
-        <div class="menu-title" style="margin-top:12px;">系统</div>
-        <a class="menu-item" data-page="users" onclick="showPage('users')">
-            <i class="fas fa-user-cog"></i><span>用户管理</span>
-        </a>
-        <a class="menu-item" data-page="config" onclick="showPage('config')">
-            <i class="fas fa-cog"></i><span>系统配置</span>
-        </a>
-    </div>
+<aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo">🚗</div><div class="name">爱租车</div></div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">业务管理</div>
+        <a class="nav-item active" data-page="dashboard" onclick="switchSidebar(this)"><span class="icon">📊</span> <span>数据看板</span></a>
+        <a class="nav-item" data-page="vehicles" onclick="switchSidebar(this)"><span class="icon">🚗</span> <span>车辆管理</span></a>
+        <a class="nav-item" data-page="customers" onclick="switchSidebar(this)"><span class="icon">👥</span> <span>客户管理</span></a>
+        <a class="nav-item" data-page="orders" onclick="switchSidebar(this)"><span class="icon">📋</span> <span>订单管理</span></a>
+        <a class="nav-item" data-page="violations" onclick="switchSidebar(this)"><span class="icon">⚠️</span> <span>违章管理</span></a>
+        <div class="nav-section" style="margin-top:.5rem">系统管理</div>
+        <a class="nav-item" data-page="stats" onclick="switchSidebar(this)"><span class="icon">📈</span> <span>统计报表</span></a>
+        <a class="nav-item" data-page="users" onclick="switchSidebar(this)"><span class="icon">👤</span> <span>用户管理</span></a>
+        <a class="nav-item" data-page="config" onclick="switchSidebar(this)"><span class="icon">⚙️</span> <span>系统配置</span></a>
+    </nav>
     <div class="sidebar-footer">
-        <div class="avatar" id="sidebarAvatar">A</div>
-        <span class="name" id="sidebarUser">管理员</span>
+        <div class="avatar" id="sideAvatar">A</div>
+        <div class="info" style="flex:1;"><div style="color:rgba(255,255,255,.7);font-weight:500;" id="sideName">管理员</div><div style="font-size:.6875rem;" id="sideRole"></div></div>
+        <button onclick="logout()" style="background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:1.125rem;padding:4px;" title="退出登录"><i class="fas fa-sign-out-alt"></i></button>
     </div>
-</nav>
+</aside>
 
-<!-- 主内容 -->
-<div class="main-content">
-    <header class="topbar">
-        <div class="page-title" id="pageTitle">📊 数据看板</div>
-        <div class="topbar-actions">
-            <span style="font-size:14px;color:#8c8f9c;" id="currentTime"></span>
-            <button class="btn btn-outline" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 退出</button>
-        </div>
-    </header>
-    <div class="page-content" id="pageContainer"></div>
-</div>
+<div id="app">
+    <div class="main">
+        <header class="topbar">
+            <div class="breadcrumb"><span>爱租车</span> <span style="color:#cbd5e1;">/</span> <span class="current" id="breadcrumbTitle">数据看板</span></div>
+            <div class="time" id="topTime"></div>
+        </header>
+        <div class="page-content">
 
-<!-- 模态框 -->
-<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
+            <!-- ====== Dashboard ====== -->
+            <template v-if="page==='dashboard'">
+                <div class="stat-grid">
+                    <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;color:var(--primary);">📋</div><div class="stat-info"><div class="stat-val">{{ dash.orders }}</div><div class="stat-lbl">总订单</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:var(--warning);">💰</div><div class="stat-info"><div class="stat-val">¥{{ dash.revenue.toLocaleString() }}</div><div class="stat-lbl">总收入</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:var(--success);">🚗</div><div class="stat-info"><div class="stat-val">{{ dash.activeVehicles }}</div><div class="stat-lbl">可用车辆</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#f5f3ff;color:#7c3aed;">👥</div><div class="stat-info"><div class="stat-val">{{ dash.customers }}</div><div class="stat-lbl">客户总数</div></div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;"><h4 style="font-size:.875rem;margin-bottom:.5rem;">🚗 车辆状态分布</h4><div id="chartPie" style="height:240px;"></div></div>
+                    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;"><h4 style="font-size:.875rem;margin-bottom:.5rem;">📊 品牌数量</h4><div id="chartBar" style="height:240px;"></div></div>
+                </div>
+            </template>
 
-<!-- 确认弹窗 -->
-<div class="modal-overlay" id="confirmOverlay">
-    <div class="modal" style="max-width:400px;text-align:center;">
-        <div style="font-size:2.5rem;margin-bottom:0.5rem;" id="confirmIcon"></div>
-        <h3 style="margin-bottom:0.5rem;" id="confirmTitle"></h3>
-        <p style="color:var(--gray-400);font-size:0.9375rem;margin-bottom:1.5rem;" id="confirmMsg"></p>
-        <div style="display:flex;gap:0.75rem;justify-content:center;">
-            <button class="btn btn-outline" onclick="resolveConfirm(false)">取消</button>
-            <button class="btn btn-danger" id="confirmOkBtn" onclick="resolveConfirm(true)">确认</button>
+            <!-- ====== Vehicles ====== -->
+            <template v-if="page==='vehicles'">
+                <div class="toolbar">
+                    <button class="btn btn-primary" @click="openVehicleModal()"><i class="fas fa-plus"></i> 新增车辆</button>
+                    <button class="btn btn-outline" @click="exportVehicles"><i class="fas fa-download"></i> 导出</button>
+                    <button class="btn btn-outline btn-xs" :class="{active: viewMode==='list'}" @click="viewMode='list'" style="margin-left:auto">列表</button>
+                    <button class="btn btn-outline btn-xs" :class="{active: viewMode==='card'}" @click="viewMode='card'">卡片</button>
+                    <input placeholder="搜索..." v-model="vehicleSearch" @input="filterVehicles">
+                </div>
+                <div v-if="viewMode==='list'" class="table-wrap">
+                    <table><thead><tr><th>品牌/型号</th><th>车牌</th><th>颜色</th><th>座位</th><th>日租金</th><th>状态</th><th>车位</th><th>操作</th></tr></thead>
+                    <tbody><tr v-for="v in filteredVehicles" :key="v.id">
+                        <td><strong>{{ v.brand }}</strong> {{ v.model }}</td><td>{{ v.plateNumber }}</td><td>{{ v.color }}</td><td>{{ v.seatCount }}座</td><td>¥{{ v.dailyPrice }}</td>
+                        <td><span class="badge" :class="statusClass(v.status)">{{ statusLabel(v.status) }}</span></td><td>{{ v.parkingSpot||'-' }}</td>
+                        <td style="display:flex;gap:3px;flex-wrap:wrap;">
+                            <button class="btn btn-xs btn-primary" @click="openVehicleModal(v)">编辑</button>
+                            <button v-if="v.status==='AVAILABLE'" class="btn btn-xs btn-warning" @click="setRepair(v)">维修</button>
+                            <button v-if="v.status==='REPAIR'" class="btn btn-xs btn-success" @click="completeRepair(v)">完成维修</button>
+                        </td>
+                    </tr></tbody></table>
+                </div>
+                <div v-else class="card-grid">
+                    <div class="v-card" v-for="v in filteredVehicles" :key="v.id" @click="openVehicleModal(v)">
+                        <div class="v-img" :style="v._img ? 'background-image:url('+v._img+');background-size:cover;' : ''">{{ v._img ? '' : '🚗' }}</div>
+                        <div class="v-info"><div class="name">{{ v.brand }} {{ v.model }}</div><div class="meta">{{ v.plateNumber }} · {{ v.color }} · {{ v.seatCount }}座</div>
+                        <div class="footer"><span class="price">¥{{ v.dailyPrice }}<small style="font-size:.6875rem;color:var(--text-muted);">/日</small></span><span class="badge" :class="statusClass(v.status)">{{ statusLabel(v.status) }}</span></div></div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ====== Customers ====== -->
+            <template v-if="page==='customers'">
+                <div class="toolbar"><button class="btn btn-primary" @click="openCustomerModal()"><i class="fas fa-user-plus"></i> 新增客户</button><input placeholder="搜索..." v-model="customerSearch"></div>
+                <div class="table-wrap"><table><thead><tr><th>姓名</th><th>手机号</th><th>身份证</th><th>驾照</th><th>积分</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="c in filteredCustomers" :key="c.id">
+                    <td><strong>{{ c.name }}</strong></td><td>{{ c.phone }}</td><td>{{ c.idCard }}</td><td>{{ c.license }}</td><td>{{ c.points }}</td>
+                    <td><span class="badge" :class="c.status==='BLACKLIST'?'badge-red':'badge-green'">{{ c.status==='BLACKLIST'?'黑名单':'正常' }}</span></td>
+                    <td style="display:flex;gap:3px;">
+                        <button class="btn btn-xs btn-primary" @click="openCustomerModal(c)">编辑</button>
+                        <button class="btn btn-xs btn-warning" @click="showAddPoints(c)">积分</button>
+                        <button v-if="c.status!=='BLACKLIST'" class="btn btn-xs btn-danger" @click="toggleBlacklist(c,true)">拉黑</button>
+                        <button v-else class="btn btn-xs btn-success" @click="toggleBlacklist(c,false)">移出</button>
+                    </td>
+                </tr></tbody></table></div>
+            </template>
+
+            <!-- ====== Orders ====== -->
+            <template v-if="page==='orders'">
+                <div class="toolbar"><button class="btn btn-primary" @click="openOrderModal()"><i class="fas fa-plus"></i> 创建订单</button><input placeholder="搜索..." v-model="orderSearch"></div>
+                <div class="table-wrap"><table><thead><tr><th>订单号</th><th>客户</th><th>车辆</th><th>取车</th><th>还车</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="o in filteredOrders" :key="o.id">
+                    <td><strong>{{ o.orderNo }}</strong></td><td>{{ o.customerName }}</td><td>{{ o.vehicleBrand }} {{ o.vehicleModel }}</td>
+                    <td>{{ fmtTime(o.pickupTime) }}</td><td>{{ fmtTime(o.returnTime) }}</td>
+                    <td>¥{{ o.finalAmount||o.totalAmount||0 }}</td>
+                    <td><span class="badge" :class="orderStatusClass(o.status)">{{ orderStatusLabel(o.status) }}</span></td>
+                    <td style="display:flex;gap:3px;">
+                        <button v-if="o.status==='PENDING'" class="btn btn-xs btn-success" @click="confirmPickup(o)">取车</button>
+                        <button v-if="o.status==='PICKED_UP'" class="btn btn-xs btn-success" @click="showReturnModal(o)">还车</button>
+                        <button v-if="o.status==='PENDING'" class="btn btn-xs btn-danger" @click="cancelOrder(o)">取消</button>
+                        <button v-if="o.status==='RETURNED'" class="btn btn-xs btn-warning" @click="showMarkAbnormal(o)">标记异常</button>
+                    </td>
+                </tr></tbody></table></div>
+            </template>
+
+            <!-- ====== Violations ====== -->
+            <template v-if="page==='violations'">
+                <div class="toolbar"><button class="btn btn-primary" @click="openViolationModal()"><i class="fas fa-plus"></i> 新增违章</button><input placeholder="搜索..." v-model="violSearch"></div>
+                <div class="table-wrap"><table><thead><tr><th>订单号</th><th>客户</th><th>车牌</th><th>时间</th><th>地点</th><th>扣分</th><th>罚款</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="v in filteredViolations" :key="v.id">
+                    <td>{{ v.orderNo }}</td><td>{{ v.customerName }}</td><td>{{ v.vehiclePlate }}</td><td>{{ fmtTime(v.violationTime) }}</td><td>{{ v.location }}</td>
+                    <td style="color:var(--danger);font-weight:600;">{{ v.points }}分</td><td>¥{{ v.fineAmount }}</td>
+                    <td><span class="badge" :class="v.status==='RESOLVED'?'badge-green':'badge-amber'">{{ v.status==='RESOLVED'?'已处理':'待处理' }}</span></td>
+                    <td><button v-if="v.status==='PENDING'" class="btn btn-xs btn-success" @click="resolveViolation(v)">处理完成</button></td>
+                </tr></tbody></table></div>
+            </template>
+
+            <!-- ====== Statistics ====== -->
+            <template v-if="page==='stats'">
+                <div class="stat-grid">
+                    <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;color:var(--primary);">📋</div><div class="stat-info"><div class="stat-val">{{ dash.orders }}</div><div class="stat-lbl">总订单量</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:var(--warning);">💰</div><div class="stat-info"><div class="stat-val">¥{{ dash.revenue.toLocaleString() }}</div><div class="stat-lbl">总收入</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4;color:var(--success);">📈</div><div class="stat-info"><div class="stat-val">¥{{ Math.round(dash.revenue*0.3).toLocaleString() }}</div><div class="stat-lbl">预估利润</div></div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#f5f3ff;color:#7c3aed;">🚗</div><div class="stat-info"><div class="stat-val">{{ dash.activeVehicles }}</div><div class="stat-lbl">可用车辆</div></div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;"><h4 style="font-size:.875rem;margin-bottom:.5rem;">📈 订单收入趋势</h4><div id="chartLine" style="height:260px;"></div></div>
+                    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;"><h4 style="font-size:.875rem;margin-bottom:.5rem;">🚗 车辆出租率</h4><div id="chartGauge" style="height:260px;"></div></div>
+                </div>
+            </template>
+
+            <!-- ====== Users ====== -->
+            <template v-if="page==='users'">
+                <div class="toolbar"><button class="btn btn-primary" @click="openUserModal()"><i class="fas fa-user-plus"></i> 新增账号</button><input placeholder="搜索..." v-model="userSearch"></div>
+                <div class="table-wrap"><table><thead><tr><th>用户名</th><th>姓名</th><th>手机号</th><th>角色</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+                <tbody><tr v-for="u in filteredUsers" :key="u.id">
+                    <td><strong>{{ u.username }}</strong></td><td>{{ u.realName }}</td><td>{{ u.phone }}</td>
+                    <td><span class="badge" :class="u.role==='SUPER'?'badge-red':u.role==='ADMIN'?'badge-blue':'badge-gray'">{{ roleLabel(u.role) }}</span></td>
+                    <td><span class="badge" :class="u.status===1?'badge-green':'badge-gray'">{{ u.status===1?'启用':'禁用' }}</span></td>
+                    <td>{{ fmtTime(u.lastLoginTime) }}</td>
+                    <td style="display:flex;gap:3px;">
+                        <button class="btn btn-xs btn-primary" @click="openUserModal(u)">编辑</button>
+                        <button class="btn btn-xs btn-warning" @click="resetUserPwd(u)">重置密码</button>
+                        <button class="btn btn-xs btn-outline" @click="showUserLog(u)">日志</button>
+                        <button class="btn btn-xs btn-danger" @click="deleteUser(u)">删除</button>
+                    </td>
+                </tr></tbody></table></div>
+            </template>
+
+            <!-- ====== Config ====== -->
+            <template v-if="page==='config'">
+                <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;max-width:640px;">
+                    <h3 style="margin-bottom:1rem;">⚙️ 系统参数配置</h3>
+                    <div class="form-row"><div class="form-group"><label class="form-label">日租金上限</label><input class="form-input" type="number" v-model="cfg.maxDailyPrice"></div><div class="form-group"><label class="form-label">押金比例</label><input class="form-input" type="number" step="0.01" v-model="cfg.depositRatio"></div></div>
+                    <div class="form-row"><div class="form-group"><label class="form-label">超时费率 (元/时)</label><input class="form-input" type="number" v-model="cfg.overtimeRate"></div><div class="form-group"><label class="form-label">违章保证金</label><input class="form-input" type="number" v-model="cfg.violationDeposit"></div></div>
+                    <div class="form-actions"><button class="btn btn-outline" @click="loadConfig">恢复</button><button class="btn btn-primary" @click="saveConfig">保存配置</button></div>
+                </div>
+            </template>
+
         </div>
     </div>
-</div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+    <!-- Modal -->
+    <div class="modal-mask" v-if="modal.show" @click.self="modal.show=false">
+        <div class="modal-box"><component :is="modal.component" v-bind="modal.props" @close="modal.show=false" @done="onModalDone"></component></div>
+    </div>
+    <div class="toast" :style="{background:toast.bg}" v-if="toast.show">{{ toast.msg }}</div>
+</div><!-- end #app -->
 
 <script>
-// ============================================================
-// 1. 核心框架
-// ============================================================
-const API = '';
+function logout() { sessionStorage.clear(); window.location.href = '/login.html'; }
 
-// 当前登录用户
-let CURRENT_USER = null;
-
-// 登录检查 + 角色菜单控制
-(function checkAuth() {
-    const user = sessionStorage.getItem('user');
-    if (!user) { window.location.href = '/login.html'; return; }
-    try {
-        CURRENT_USER = JSON.parse(user);
-        document.getElementById('sidebarAvatar').textContent = (CURRENT_USER.realName || CURRENT_USER.username || 'A')[0];
-        document.getElementById('sidebarUser').textContent = CURRENT_USER.realName || CURRENT_USER.username || '管理员';
-
-        // 角色权限控制：非SUPER角色隐藏系统管理菜单
-        if (CURRENT_USER.role !== 'SUPER') {
-            const sysMenus = document.querySelectorAll('.menu-title, .menu-item[data-page="users"], .menu-item[data-page="config"]');
-            sysMenus.forEach(el => el.style.display = 'none');
-            // 隐藏"系统"分类标题
-            const sysTitle = document.querySelector('.menu-title:last-of-type');
-            if (sysTitle && sysTitle.previousElementSibling?.dataset?.page === 'statistics') {
-                sysTitle.style.display = 'none';
-            }
-        }
-    } catch(e) {}
-})();
-
+// 侧边栏切换 (在 Vue 外部)
+function switchSidebar(el) {
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    if (window.__vuePage) {
+        window.__vuePage.value = el.dataset.page;
+    }
+}
 // 时钟
-function updateClock() {
-    const now = new Date();
-    document.getElementById('currentTime').textContent =
-        now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' +
-        String(now.getDate()).padStart(2,'0') + ' ' +
-        ['日','一','二','三','四','五','六'][now.getDay()] + ' ' +
-        String(now.getHours()).padStart(2,'0') + ':' +
-        String(now.getMinutes()).padStart(2,'0') + ':' +
-        String(now.getSeconds()).padStart(2,'0');
-}
-updateClock(); setInterval(updateClock, 1000);
+setInterval(() => { const el = document.getElementById('topTime'); if(el) el.textContent = new Date().toLocaleString('zh-CN'); }, 1000);
+(function initSidebar() {
+    const u = JSON.parse(sessionStorage.getItem('user')||'{}');
+    if (!u.username) { window.location.href = '/login.html'; return; }
+    document.getElementById('sideAvatar').textContent = (u.realName||u.username)[0];
+    document.getElementById('sideName').textContent = u.realName||u.username;
+    document.getElementById('sideRole').textContent = {SUPER:'系统管理员',ADMIN:'管理员',NORMAL:'普通用户',CUSTOMER:'注册客户'}[u.role]||u.role;
+    if (u.role !== 'SUPER' && u.role !== 'ADMIN') {
+        document.querySelectorAll('[data-page="users"], [data-page="config"]').forEach(el => el.style.display = 'none');
+    }
+})();
+</script>
+<script>
+const { createApp, ref, reactive, computed, watch, onMounted, nextTick, defineComponent } = Vue;
 
-// API 封装
-async function $get(url) {
-    const res = await fetch(API + url);
-    return res.json();
-}
-async function $post(url, body) {
-    const res = await fetch(API + url, {
-        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
-    });
-    return res.json();
-}
-async function $put(url, body) {
-    const res = await fetch(API + url, {
-        method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
-    });
-    return res.json();
-}
-async function $del(url) {
-    const res = await fetch(API + url, { method: 'DELETE' });
-    return res.json();
-}
+// ====== API ======
+const API = '';
+async function $get(u){ const r=await fetch(API+u); return r.json(); }
+async function $post(u,b){ const r=await fetch(API+u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); }
+async function $put(u,b){ const r=await fetch(API+u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); }
+async function $del(u){ const r=await fetch(API+u,{method:'DELETE'}); return r.json(); }
 
-// Toast
-let _toastTimer;
-function toast(msg, type='success') {
-    const el = document.getElementById('toast');
-    el.textContent = msg; el.className = 'toast ' + type; el.style.display = 'block';
-    clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => el.style.display = 'none', 3000);
-}
+// ====== Status maps ======
+const VEHICLE_STATUS = { AVAILABLE:'可用', RENTED:'已租', REPAIR:'维修中', OFFLINE:'下架' };
+const ORDER_STATUS = { PENDING:'待取车', PICKED_UP:'已取车', RETURNED:'已还车', CANCELLED:'已取消', COMPLETED:'已完成' };
+const ROLE_MAP = { SUPER:'系统管理员', ADMIN:'管理员', NORMAL:'普通用户', CUSTOMER:'注册客户' };
 
-// Modal
-function openModal(html) {
-    document.getElementById('modalContent').innerHTML = html;
-    document.getElementById('modalOverlay').classList.add('active');
-}
-function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-}
-document.getElementById('modalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeModal();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeConfirm(); } });
+function statusClass(s) { return { AVAILABLE:'badge-green', RENTED:'badge-blue', REPAIR:'badge-amber', OFFLINE:'badge-gray' }[s]||'badge-gray'; }
+function statusLabel(s) { return VEHICLE_STATUS[s]||s; }
+function orderStatusClass(s) { return { PENDING:'badge-amber', PICKED_UP:'badge-blue', RETURNED:'badge-green', CANCELLED:'badge-red', COMPLETED:'badge-green' }[s]||'badge-gray'; }
+function orderStatusLabel(s) { return ORDER_STATUS[s]||s; }
+function roleLabel(r) { return ROLE_MAP[r]||r; }
+function fmtTime(t) { if(!t) return '-'; return t.replace('T',' ').substring(0,16); }
 
-// ---- 自定义确认弹窗 ----
-let _confirmResolve = null;
-function showConfirm(title, message, icon, okText, okClass) {
-    icon = icon || '⚠️';
-    okText = okText || '确认';
-    okClass = okClass || 'btn-danger';
-    document.getElementById('confirmIcon').textContent = icon;
-    document.getElementById('confirmTitle').textContent = title;
-    document.getElementById('confirmMsg').textContent = message;
-    const okBtn = document.getElementById('confirmOkBtn');
-    okBtn.textContent = okText;
-    okBtn.className = 'btn ' + okClass;
-    document.getElementById('confirmOverlay').classList.add('active');
-    return new Promise(resolve => { _confirmResolve = resolve; });
-}
-function resolveConfirm(result) {
-    document.getElementById('confirmOverlay').classList.remove('active');
-    if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
-}
-function closeConfirm() {
-    if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; }
-    document.getElementById('confirmOverlay').classList.remove('active');
-}
-document.getElementById('confirmOverlay').addEventListener('click', function(e) {
-    if (e.target === this) resolveConfirm(false);
+// ====== Vehicle Modal ======
+const VehicleModal = defineComponent({
+    props: { vehicle: Object },
+    emits: ['close','done'],
+    setup(props, { emit }) {
+        const isEdit = !!props.vehicle;
+        const form = reactive({
+            brand: props.vehicle?.brand||'', model: props.vehicle?.model||'', plateNumber: props.vehicle?.plateNumber||'',
+            color: props.vehicle?.color||'', seatCount: props.vehicle?.seatCount||5, dailyPrice: props.vehicle?.dailyPrice||'',
+            status: props.vehicle?.status||'AVAILABLE', parkingSpot: props.vehicle?.parkingSpot||'',
+            parkingTime: props.vehicle?.parkingTime ? props.vehicle.parkingTime.replace(' ','T').substring(0,16) : '',
+            imageUrls: props.vehicle?.imageUrls||'', description: props.vehicle?.description||''
+        });
+        const uploading = ref(false);
+        async function submit() {
+            if (!form.brand || !form.model || !form.plateNumber) { alert('请填写品牌、型号、车牌'); return; }
+            form.seatCount = parseInt(form.seatCount)||5; form.dailyPrice = parseFloat(form.dailyPrice)||0;
+            if (form.parkingTime) form.parkingTime = form.parkingTime + ':00';
+            let r;
+            if (isEdit) { r = await $put('/api/vehicle/edit/'+props.vehicle.id, form); }
+            else { r = await $post('/api/vehicle/add', form); }
+            if (r.code===200) { emit('done'); emit('close'); } else { alert(r.msg||'操作失败'); }
+        }
+        return { isEdit, form, uploading, submit };
+    },
+    template: `
+        <div><h3>{{ isEdit ? '✏️ 编辑车辆' : '🚗 新增车辆' }}</h3>
+        <div class="form-row"><div class="form-group"><label class="form-label">品牌<span style="color:red">*</span></label><input class="form-input" v-model="form.brand" placeholder="丰田"></div><div class="form-group"><label class="form-label">型号<span style="color:red">*</span></label><input class="form-input" v-model="form.model" placeholder="凯美瑞"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">车牌<span style="color:red">*</span></label><input class="form-input" v-model="form.plateNumber" placeholder="粤A·88888"></div><div class="form-group"><label class="form-label">颜色</label><input class="form-input" v-model="form.color"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">座位数</label><input class="form-input" type="number" v-model="form.seatCount"></div><div class="form-group"><label class="form-label">日租金<span style="color:red">*</span></label><input class="form-input" type="number" step="0.01" v-model="form.dailyPrice"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">状态</label><select class="form-select" v-model="form.status"><option value="AVAILABLE">可用</option><option value="RENTED">已租</option><option value="REPAIR">维修中</option><option value="OFFLINE">下架</option></select></div><div class="form-group"><label class="form-label">车位</label><input class="form-input" v-model="form.parkingSpot" placeholder="A-01"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">入库时间</label><input class="form-input" type="datetime-local" v-model="form.parkingTime"></div><div class="form-group"><label class="form-label">图片URL</label><input class="form-input" v-model="form.imageUrls" placeholder="逗号分隔"></div></div>
+        <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" v-model="form.description"></textarea></div>
+        <div class="form-actions"><button class="btn btn-outline" @click="$emit('close')">取消</button><button class="btn btn-primary" @click="submit">{{ isEdit?'保存':'新增' }}</button></div></div>`
 });
 
-// 退出
-async function logout() {
-    const ok = await showConfirm('退出登录', '确定要退出当前账号吗？', '👋', '退出', 'btn-danger');
-    if (ok) { sessionStorage.clear(); window.location.href = '/login.html'; }
-}
-
-// ============================================================
-// 2. 页面路由
-// ============================================================
-const PAGE_TITLES = {
-    dashboard: '📊 数据看板',
-    vehicles: '🚗 车辆管理',
-    customers: '👥 客户管理',
-    orders: '📋 订单管理',
-    violations: '⚠️ 违章管理',
-    statistics: '📈 统计报表',
-    users: '👤 用户管理',
-    config: '⚙️ 系统配置',
-};
-
-async function showPage(page) {
-    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.menu-item[data-page="${page}"]`)?.classList.add('active');
-    document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
-
-    const container = document.getElementById('pageContainer');
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>加载中...</p></div>';
-
-    try {
-        switch(page) {
-            case 'dashboard': container.innerHTML = await renderDashboard(); break;
-            case 'vehicles': container.innerHTML = await renderVehicles(); break;
-            case 'customers': container.innerHTML = await renderCustomers(); break;
-            case 'orders': container.innerHTML = await renderOrders(); break;
-            case 'violations': container.innerHTML = await renderViolations(); break;
-            case 'statistics': container.innerHTML = await renderStatistics(); break;
-            case 'users': container.innerHTML = await renderUsers(); break;
-            case 'config': container.innerHTML = await renderConfig(); break;
-            default: container.innerHTML = '<p>页面建设中...</p>';
+// ====== Customer Modal ======
+const CustomerModal = defineComponent({
+    props: { customer: Object }, emits: ['close','done'],
+    setup(props, { emit }) {
+        const isEdit = !!props.customer;
+        const form = reactive({ name: props.customer?.name||'', phone: props.customer?.phone||'', idCard: props.customer?.idCard||'', license: props.customer?.license||'', remark: props.customer?.remark||'' });
+        async function submit() {
+            if (!form.name || !form.phone) { alert('请填写姓名和手机号'); return; }
+            let r;
+            if (isEdit) { r = await $put('/api/customer/edit/'+props.customer.id, form); }
+            else { r = await $post('/api/customer/add', form); }
+            if (r.code===200) { emit('done'); emit('close'); } else { alert(r.msg||'操作失败'); }
         }
-    } catch(e) {
-        container.innerHTML = '<p style="color:#f5222d;text-align:center;padding:40px;">加载失败: ' + e.message + '</p>';
-    }
-}
+        return { isEdit, form, submit };
+    },
+    template: `
+        <div><h3>{{ isEdit ? '✏️ 编辑客户' : '👤 新增客户' }}</h3>
+        <div class="form-row"><div class="form-group"><label class="form-label">姓名<span style="color:red">*</span></label><input class="form-input" v-model="form.name"></div><div class="form-group"><label class="form-label">手机号<span style="color:red">*</span></label><input class="form-input" v-model="form.phone"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">身份证</label><input class="form-input" v-model="form.idCard"></div><div class="form-group"><label class="form-label">驾驶证</label><input class="form-input" v-model="form.license"></div></div>
+        <div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" v-model="form.remark"></textarea></div>
+        <div class="form-actions"><button class="btn btn-outline" @click="$emit('close')">取消</button><button class="btn btn-primary" @click="submit">{{ isEdit?'保存':'新增' }}</button></div></div>`
+});
 
-// ============================================================
-// 3. 数据看板
-// ============================================================
-async function renderDashboard() {
-    let stats;
-    try {
-        const res = await $get('/api/statistics/overview');
-        stats = res.code === 200 ? res.data : null;
-    } catch(e) { stats = null; }
-
-    const totalOrders = stats?.totalOrders ?? 0;
-    const totalRevenue = stats?.totalRevenue ?? 0;
-    const activeVehicles = stats?.activeVehicles ?? 0;
-    const totalCustomers = stats?.totalCustomers ?? 0;
-
-    // 获取今日待取车/待还车
-    let todayPickup = [], todayReturn = [];
-    try {
-        const [p, r] = await Promise.all([$get('/api/order/todayPickup'), $get('/api/order/todayReturn')]);
-        todayPickup = p.code === 200 ? p.data : [];
-        todayReturn = r.code === 200 ? r.data : [];
-    } catch(e) {}
-
-    const html = `
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="label">📋 总订单</div>
-                <div class="value">${totalOrders}</div>
-            </div>
-            <div class="stat-card gold">
-                <div class="label">💰 总收入</div>
-                <div class="value">¥${Number(totalRevenue).toLocaleString()}</div>
-            </div>
-            <div class="stat-card green">
-                <div class="label">🚗 可用车辆</div>
-                <div class="value">${activeVehicles}</div>
-            </div>
-            <div class="stat-card purple">
-                <div class="label">👥 客户总数</div>
-                <div class="value">${totalCustomers}</div>
-            </div>
-        </div>
-        <!-- 图表行 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4 style="margin-bottom:8px;">🚗 车辆状态分布</h4>
-                <div id="chartVehicleStatus" style="height:260px;"></div>
-            </div>
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4 style="margin-bottom:8px;">📊 品牌车辆数量</h4>
-                <div id="chartVehicleBrand" style="height:260px;"></div>
-            </div>
-        </div>
-        <!-- 待办行 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4 style="margin-bottom:16px;">📌 今日待取车</h4>
-                ${todayPickup.length ? todayPickup.map(o => `
-                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;">
-                        <span>${o.orderNo} - ${o.customerName}</span>
-                        <span style="color:#faad14;">${o.pickupTime || '-'}</span>
-                    </div>
-                `).join('') : '<p style="color:#8c8f9c;">暂无待取车订单</p>'}
-            </div>
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4 style="margin-bottom:16px;">📌 今日待还车</h4>
-                ${todayReturn.length ? todayReturn.map(o => `
-                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;">
-                        <span>${o.orderNo} - ${o.customerName}</span>
-                        <span style="color:#1890ff;">${o.returnTime || '-'}</span>
-                    </div>
-                `).join('') : '<p style="color:#8c8f9c;">暂无待还车订单</p>'}
-            </div>
-        </div>`;
-
-    // 异步加载图表和状态概览
-    // 延迟执行，确保DOM已渲染
-    setTimeout(loadDashboardCharts, 100);
-    return html;
-}
-
-async function loadDashboardCharts() {
-    try {
-        const res = await $get('/api/vehicle/statusSummary');
-        if (res.code === 200 && res.data) {
-            const statusCount = res.data.statusCount || {};
-            renderStatusPieChart(statusCount);
+// ====== User Modal ======
+const UserModal = defineComponent({
+    props: { user: Object }, emits: ['close','done'],
+    setup(props, { emit }) {
+        const isEdit = !!props.user;
+        const form = reactive({ username: props.user?.username||'', password: '', realName: props.user?.realName||'', phone: props.user?.phone||'', email: props.user?.email||'', role: props.user?.role||'NORMAL', status: props.user?.status??1 });
+        async function submit() {
+            if (!form.username || (!isEdit && !form.password)) { alert('请填写必填项'); return; }
+            const data = {...form}; data.status = parseInt(data.status);
+            let r;
+            if (isEdit) { r = await $put('/api/user/edit/'+props.user.id, data); }
+            else { r = await $post('/api/user/add', data); }
+            if (r.code===200) { emit('done'); emit('close'); } else { alert(r.msg||'操作失败'); }
         }
-    } catch(e) {}
+        return { isEdit, form, submit };
+    },
+    template: `
+        <div><h3>{{ isEdit ? '✏️ 编辑用户' : '👤 新增用户' }}</h3>
+        <div class="form-row"><div class="form-group"><label class="form-label">用户名<span style="color:red">*</span></label><input class="form-input" v-model="form.username"></div><div class="form-group"><label class="form-label">{{isEdit?'新密码(留空不修改)':'密码'}}<span v-if="!isEdit" style="color:red">*</span></label><input class="form-input" type="password" v-model="form.password"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">姓名</label><input class="form-input" v-model="form.realName"></div><div class="form-group"><label class="form-label">手机号</label><input class="form-input" v-model="form.phone"></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">角色</label><select class="form-select" v-model="form.role"><option value="NORMAL">普通用户</option><option value="ADMIN">管理员</option><option value="SUPER">超级管理员</option></select></div><div class="form-group"><label class="form-label">状态</label><select class="form-select" v-model.number="form.status"><option :value="1">启用</option><option :value="0">禁用</option></select></div></div>
+        <div class="form-actions"><button class="btn btn-outline" @click="$emit('close')">取消</button><button class="btn btn-primary" @click="submit">{{ isEdit?'保存':'新增' }}</button></div></div>`
+});
 
-    try {
-        const res = await $get('/api/vehicle/list');
-        if (res.code === 200 && res.data) {
-            renderBrandBarChart(res.data);
+// ====== Main App ======
+createApp({
+    components: { VehicleModal, CustomerModal, UserModal },
+    setup() {
+        const user = reactive({ name: '', avatar: 'A', role: '', roleLabel: '' });
+        const page = ref('dashboard');
+        window.__vuePage = page;  // 暴露给侧边栏原生JS切换
+        const toast = reactive({ show: false, msg: '', bg: '#16a34a' });
+        const modal = reactive({ show: false, component: null, props: {} });
+        const viewMode = ref('list');
+
+        // Data
+        const vehicles = ref([]); const customers = ref([]); const orders = ref([]); const violations = ref([]); const usersList = ref([]);
+        const dash = reactive({ orders: 0, revenue: 0, activeVehicles: 0, customers: 0 });
+        const cfg = reactive({ maxDailyPrice: 1000, depositRatio: 0.3, overtimeRate: 50, violationDeposit: 500 });
+        const vehicleSearch = ref(''); const customerSearch = ref(''); const orderSearch = ref(''); const violSearch = ref(''); const userSearch = ref('');
+
+        // Init
+        onMounted(async () => {
+            const u = JSON.parse(sessionStorage.getItem('user')||'{}');
+            if (!u.username) { window.location.href = '/login.html'; return; }
+            user.name = u.realName||u.username; user.avatar = (u.realName||u.username)[0]; user.role = u.role; user.roleLabel = ROLE_MAP[u.role]||u.role;
+            await loadAll();
+            document.getElementById('topTime').textContent = new Date().toLocaleString('zh-CN');
+            document.getElementById('breadcrumbTitle').textContent = '数据看板';
+            watch(page, async p => {
+                document.getElementById('breadcrumbTitle').textContent = pageTitle.value;
+                await nextTick();
+                if (p==='dashboard') renderCharts();
+                if (p==='stats') renderStatsCharts();
+            });
+            nextTick(() => renderCharts());
+        });
+
+        async function loadAll() {
+            try { const r=await $get('/api/vehicle/list'); if(r.code===200) vehicles.value=r.data.map(v=>({...v,_img: v.imageUrls?v.imageUrls.split(',')[0].trim():null})); } catch{}
+            try { const r=await $get('/api/customer/list'); if(r.code===200) customers.value=r.data; } catch{}
+            try { const r=await $get('/api/order/list'); if(r.code===200) orders.value=r.data; } catch{}
+            try { const r=await $get('/api/violation/list'); if(r.code===200) violations.value=r.data; } catch{}
+            try { const r=await $get('/api/user/list'); if(r.code===200) usersList.value=r.data; } catch{}
+            try { const r=await $get('/api/statistics/overview'); if(r.code===200&&r.data){ dash.orders=r.data.totalOrders||0; dash.revenue=Number(r.data.totalRevenue||0); dash.activeVehicles=r.data.activeVehicles||0; dash.customers=r.data.totalCustomers||0; } } catch{}
+            try { const r=await $get('/api/config/map'); if(r.code===200&&r.data){ cfg.maxDailyPrice=r.data.maxDailyPrice||1000; cfg.depositRatio=r.data.depositRatio||0.3; cfg.overtimeRate=r.data.overtimeRate||50; cfg.violationDeposit=r.data.violationDeposit||500; } } catch{}
         }
-    } catch(e) {}
 
-    // 窗口大小变化时重绘
-    window.addEventListener('resize', () => {
-        const pieChart = echarts.getInstanceByDom(document.getElementById('chartVehicleStatus'));
-        const barChart = echarts.getInstanceByDom(document.getElementById('chartVehicleBrand'));
-        if (pieChart) pieChart.resize();
-        if (barChart) barChart.resize();
-    });
-}
+        function showToast(msg, bg) { toast.msg=msg; toast.bg=bg||'#16a34a'; toast.show=true; setTimeout(()=>toast.show=false,2500); }
 
-function renderStatusPieChart(statusCount) {
-    const dom = document.getElementById('chartVehicleStatus');
-    if (!dom) return;
-    // 销毁旧实例
-    const old = echarts.getInstanceByDom(dom);
-    if (old) old.dispose();
+        // Modals
+        function openVehicleModal(v) { modal.props = { vehicle: v||null }; modal.component = 'VehicleModal'; modal.show = true; }
+        function openCustomerModal(c) { modal.props = { customer: c||null }; modal.component = 'CustomerModal'; modal.show = true; }
+        function openUserModal(u) { modal.props = { user: u||null }; modal.component = 'UserModal'; modal.show = true; }
+        function onModalDone() { modal.show = false; loadAll(); showToast('操作成功'); }
 
-    const chart = echarts.init(dom);
-    const labels = { AVAILABLE: '可用', RENTED: '已租', REPAIR: '维修中', OFFLINE: '下架' };
-    const colors = { AVAILABLE: '#52c41a', RENTED: '#1890ff', REPAIR: '#faad14', OFFLINE: '#bfbfbf' };
+        // Vehicle actions
+        async function setRepair(v) { const r=prompt('维修原因:'); if(!r) return; const e=prompt('预计完成时间(yyyy-MM-dd HH:mm):'); if(!e) return; await $post('/api/vehicle/repair?id='+v.id+'&reason='+encodeURIComponent(r)+'&expectedTime='+encodeURIComponent(e+':00')); loadAll(); showToast('已设为维修'); }
+        async function completeRepair(v) { await $post('/api/vehicle/repairComplete/'+v.id); loadAll(); showToast('维修完成'); }
+        async function exportVehicles() { const r=await $get('/api/vehicle/export'); showToast(r.code===200?'导出成功':'导出失败', r.code===200?'#16a34a':'#dc2626'); }
 
-    const data = Object.entries(labels).map(([k, v]) => ({
-        name: v, value: statusCount[k] || 0
-    }));
+        // Customer
+        async function showAddPoints(c) { const p=prompt('增加积分数:', '10'); if(p&&parseInt(p)>0) { await $post('/api/customer/addPoints/'+c.id+'?points='+p); loadAll(); showToast('积分已增加'); } }
+        async function toggleBlacklist(c, bl) {
+            if (bl) { const r=prompt('加入黑名单原因:'); if(r) { await $post('/api/customer/blacklist/'+c.id+'?reason='+encodeURIComponent(r)); loadAll(); showToast('已加入黑名单','#dc2626'); } }
+            else { await $post('/api/customer/unblacklist/'+c.id); loadAll(); showToast('已移出黑名单'); }
+        }
 
-    chart.setOption({
-        tooltip: { trigger: 'item', formatter: '{b}: {c} 辆 ({d}%)' },
-        legend: { bottom: 0 },
-        color: Object.values(colors),
-        series: [{
-            type: 'pie',
-            radius: ['45%', '72%'],
-            center: ['50%', '45%'],
-            label: { formatter: '{b}\n{d}%' },
-            emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.3)' } },
-            data: data
-        }]
-    });
-}
+        // Orders
+        async function openOrderModal() {
+            const custs = customers.value, vehs = vehicles.value.filter(v=>v.status==='AVAILABLE');
+            const cid = prompt('选择客户ID:\n'+custs.map(c=>c.id+' '+c.name+' '+c.phone).join('\n'));
+            if(!cid) return;
+            const vid = prompt('选择车辆ID:\n'+vehs.map(v=>v.id+' '+v.brand+' '+v.model+' ¥'+v.dailyPrice).join('\n'));
+            if(!vid) return;
+            const p = prompt('取车时间(yyyy-MM-ddTHH:mm):', new Date().toISOString().substring(0,16));
+            if(!p) return;
+            const r = prompt('还车时间(yyyy-MM-ddTHH:mm):');
+            if(!r) return;
+            const res = await $post('/api/order/create', { customerId: parseInt(cid), vehicleId: parseInt(vid), pickupTime: p+':00', returnTime: r+':00', remark: '' });
+            if (res.code===200) { loadAll(); showToast('订单创建成功'); } else { alert(res.msg); }
+        }
+        async function confirmPickup(o) { await $post('/api/order/pickup/'+o.id); loadAll(); showToast('取车确认成功'); }
+        async function showReturnModal(o) { const t=prompt('实际还车时间(yyyy-MM-ddTHH:mm):', new Date().toISOString().substring(0,16)); if(!t) return; const c=prompt('车况描述:','完好'); if(!c) return; await $post('/api/order/return?orderId='+o.id+'&actualReturnTime='+encodeURIComponent(t+':00')+'&carCondition='+encodeURIComponent(c)); loadAll(); showToast('还车成功'); }
+        async function cancelOrder(o) { const r=prompt('取消原因:'); if(!r) return; await $post('/api/order/cancel/'+o.id+'?reason='+encodeURIComponent(r)); loadAll(); showToast('订单已取消'); }
+        async function showMarkAbnormal(o) { const t=prompt('异常类型(车辆损坏/违章未处理/逾期未还/其他):'); if(!t) return; const r=prompt('备注:'); if(!r) return; await $post('/api/order/markAbnormal?orderId='+o.id+'&type='+encodeURIComponent(t)+'&remark='+encodeURIComponent(r)); loadAll(); showToast('已标记异常'); }
 
-function renderBrandBarChart(vehicles) {
-    const dom = document.getElementById('chartVehicleBrand');
-    if (!dom) return;
-    const old = echarts.getInstanceByDom(dom);
-    if (old) old.dispose();
+        // Violations
+        async function openViolationModal() {
+            const no=prompt('订单号:'), cn=prompt('客户姓名:'), vp=prompt('车牌号:'), t=prompt('违章时间(yyyy-MM-ddTHH:mm):'), l=prompt('地点:'), p=parseInt(prompt('扣分:','0'))||0, f=parseFloat(prompt('罚款金额:','0'))||0;
+            if(!no||!cn||!vp||!t) return;
+            await $post('/api/violation/add',{orderNo:no,customerName:cn,vehiclePlate:vp,violationTime:t+':00',location:l||'',points:p,fineAmount:f,remark:''}); loadAll(); showToast('违章记录已创建');
+        }
+        async function resolveViolation(v) { const u=JSON.parse(sessionStorage.getItem('user')||'{}'); await $post('/api/violation/resolve/'+v.id+'?resolver='+encodeURIComponent(u.realName||u.username||'管理员')); loadAll(); showToast('已标记处理完成'); }
 
-    const chart = echarts.init(dom);
-    // 按品牌聚合
-    const brandCount = {};
-    vehicles.forEach(v => {
-        const b = v.brand || '未知';
-        brandCount[b] = (brandCount[b] || 0) + 1;
-    });
-    const sorted = Object.entries(brandCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const brands = sorted.map(s => s[0]);
-    const counts = sorted.map(s => s[1]);
+        // Users
+        async function resetUserPwd(u) { const r=await $post('/api/user/resetPassword/'+u.id); showToast(r.code===200?(r.msg||'密码已重置'):(r.msg||'操作失败'), r.code===200?'#16a34a':'#dc2626'); }
+        async function showUserLog(u) { const r=await $get('/api/user/logs/'+u.id); if(r.code===200){ alert('最后登录: '+(r.data.lastLoginTime||'无')+'\n登录IP: '+(r.data.lastLoginIp||'无')); } }
+        async function deleteUser(u) { if(confirm('确定删除账号「'+u.username+'」?')){ const r=await $del('/api/user/delete/'+u.id); if(r.code===200) { loadAll(); showToast('已删除'); } } }
 
-    chart.setOption({
-        tooltip: { trigger: 'axis' },
-        grid: { left: '3%', right: '10%', bottom: '3%', containLabel: true },
-        xAxis: { type: 'category', data: brands, axisLabel: { rotate: 30, fontSize: 11 } },
-        yAxis: { type: 'value', name: '辆' },
-        series: [{
-            type: 'bar',
-            data: counts,
-            itemStyle: {
-                borderRadius: [6, 6, 0, 0],
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: '#1890ff' }, { offset: 1, color: '#69c0ff' }
-                ])
-            },
-            emphasis: { itemStyle: { color: '#096dd9' } }
-        }]
-    });
-}
+        // Config
+        async function loadConfig() { const r=await $get('/api/config/map'); if(r.code===200){ cfg.maxDailyPrice=r.data.maxDailyPrice||1000; cfg.depositRatio=r.data.depositRatio||0.3; cfg.overtimeRate=r.data.overtimeRate||50; cfg.violationDeposit=r.data.violationDeposit||500; } }
+        async function saveConfig() { await $post('/api/config/saveBatch', cfg); showToast('配置已保存'); }
 
-// ============================================================
-// 4. 车辆管理
-// ============================================================
-const VEHICLE_STATUS_MAP = { 'AVAILABLE':'可用','RENTED':'已租','REPAIR':'维修中','OFFLINE':'下架' };
-
-async function renderVehicles() {
-    const res = await $get('/api/vehicle/list');
-    const vehicles = res.code === 200 ? res.data : [];
-
-    return `
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="showAddVehicle()"><i class="fas fa-plus"></i> 新增车辆</button>
-            <button class="btn btn-success" onclick="exportVehicles()"><i class="fas fa-file-excel"></i> 导出Excel</button>
-            <div class="view-toggle" style="display:flex;gap:4px;background:#f0f2f5;border-radius:8px;padding:4px;">
-                <button class="active" onclick="setVehicleView('list')" id="viewListBtn" style="padding:6px 14px;border:none;border-radius:6px;background:#fff;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.08);"><i class="fas fa-list"></i> 列表</button>
-                <button onclick="setVehicleView('card')" id="viewCardBtn" style="padding:6px 14px;border:none;border-radius:6px;background:transparent;cursor:pointer;color:#666;"><i class="fas fa-th"></i> 卡片</button>
-            </div>
-            <input class="search-input" placeholder="🔍 搜索品牌/车牌..." oninput="filterTable(this)" data-table="vehicleTable">
-            <select onchange="filterTable(this)" data-table="vehicleTable" data-col="5">
-                <option value="">全部状态</option>
-                <option value="可用">可用</option><option value="已租">已租</option>
-                <option value="维修中">维修中</option><option value="下架">下架</option>
-            </select>
-        </div>
-        <div class="table-container">
-            <table><thead><tr>
-                <th>品牌/型号</th><th>车牌</th><th>颜色</th><th>座位</th><th>日租金</th>
-                <th>状态</th><th>车位</th><th>操作</th>
-            </tr></thead>
-            <tbody id="vehicleTable">
-                ${vehicles.map(v => {
-                    const cls = (v.status || '').toLowerCase();
-                    return `<tr>
-                        <td><strong>${v.brand||''}</strong> ${v.model||''}</td>
-                        <td>${v.plateNumber||''}</td>
-                        <td>${v.color||''}</td>
-                        <td>${v.seatCount||0}座</td>
-                        <td>¥${v.dailyPrice||0}</td>
-                        <td><span class="status-badge ${cls}">${VEHICLE_STATUS_MAP[v.status]||v.status||''}</span></td>
-                        <td>${v.parkingSpot||'-'}</td>
-                        <td><div class="table-actions">
-                            <button class="btn-sm btn-primary" onclick="showVehicleDetail(${v.id})">详情</button>
-                            <button class="btn-sm btn-warning" onclick="showEditVehicle(${v.id})">编辑</button>
-                            ${v.status==='AVAILABLE'?`<button class="btn-sm btn-warning" onclick="setRepair(${v.id})">维修</button>`:''}
-                            ${v.status==='REPAIR'?`<button class="btn-sm btn-success" onclick="completeRepair(${v.id})">完成</button>`:''}
-                            ${v.status==='AVAILABLE'?`<button class="btn-sm btn-success" onclick="showParking(${v.id})">入库</button>`:''}
-                        </div></td>
-                    </tr>`;
-                }).join('')}
-            </tbody></table>
-        </div>
-
-        <!-- 卡片视图 -->
-        <div class="card-grid" id="vehicleCardGrid" style="display:none;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:20px;">
-            ${vehicles.map(v => {
-                const cls = (v.status || '').toLowerCase();
-                const imgUrl = getVehicleImage(v.imageUrls);
-                return '<div class="vehicle-card" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:all 0.3s;cursor:pointer;" onclick="showVehicleDetail(' + v.id + ')">' +
-                    (imgUrl.startsWith('/uploads/') || imgUrl.startsWith('http')
-                        ? '<div style="height:140px;overflow:hidden;"><img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML=\'<div style=height:140px;background:#e8ecf1;display:flex;align-items:center;justify-content:center;font-size:48px;>🚗</div>\'"></div>'
-                        : '<div style="height:140px;background:#e8ecf1;display:flex;align-items:center;justify-content:center;font-size:48px;">🚗</div>') +
-                    '<div style="padding:16px;">' +
-                    '<div style="font-weight:600;font-size:16px;">' + (v.brand||'') + ' ' + (v.model||'') + '</div>' +
-                    '<div style="color:#8c8f9c;font-size:13px;">' + (v.plateNumber||'') + ' · ' + (v.color||'') + ' · ' + (v.seatCount||0) + '座</div>' +
-                    '<div style="font-size:20px;font-weight:700;color:#f5222d;margin:6px 0;">¥' + (v.dailyPrice||0) + ' <small style="font-size:13px;font-weight:400;color:#8c8f9c;">/日</small></div>' +
-                    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-                    '<span class="status-badge ' + cls + '">' + (VEHICLE_STATUS_MAP[v.status]||v.status||'') + '</span>' +
-                    '<span style="font-size:12px;color:#8c8f9c;">' + (v.parkingSpot||'未入库') + '</span>' +
-                    '</div></div></div>';
-            }).join('')}
-        </div>`;
-}
-
-async function setVehicleView(mode) {
-    const tableEl = document.querySelector('.table-container');
-    const cardEl = document.getElementById('vehicleCardGrid');
-    const listBtn = document.getElementById('viewListBtn');
-    const cardBtn = document.getElementById('viewCardBtn');
-
-    if (mode === 'list') {
-        if (tableEl) tableEl.style.display = 'block';
-        if (cardEl) cardEl.style.display = 'none';
-        if (listBtn) { listBtn.style.background = '#fff'; listBtn.style.boxShadow = '0 1px 4px rgba(0,0,0,0.08)'; listBtn.style.color = '#000'; }
-        if (cardBtn) { cardBtn.style.background = 'transparent'; cardBtn.style.boxShadow = 'none'; cardBtn.style.color = '#666'; }
-    } else {
-        if (tableEl) tableEl.style.display = 'none';
-        if (cardEl) cardEl.style.display = 'grid';
-        if (cardBtn) { cardBtn.style.background = '#fff'; cardBtn.style.boxShadow = '0 1px 4px rgba(0,0,0,0.08)'; cardBtn.style.color = '#000'; }
-        if (listBtn) { listBtn.style.background = 'transparent'; listBtn.style.boxShadow = 'none'; listBtn.style.color = '#666'; }
-    }
-}
-
-async function showAddVehicle() {
-    openModal(`
-        <div class="modal-header"><h3>🚗 新增车辆</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="vehicleForm" enctype="multipart/form-data">
-            <div class="form-row">
-                <div class="form-group"><label>品牌 <span class="required">*</span></label><input name="brand" required placeholder="如：丰田"></div>
-                <div class="form-group"><label>型号 <span class="required">*</span></label><input name="model" required placeholder="如：凯美瑞"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>车牌 <span class="required">*</span></label><input name="plateNumber" required placeholder="粤A·88888"></div>
-                <div class="form-group"><label>颜色</label><input name="color" placeholder="黑色"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>座位数</label><input name="seatCount" type="number" value="5"></div>
-                <div class="form-group"><label>日租金 (元) <span class="required">*</span></label><input name="dailyPrice" type="number" step="0.01" required placeholder="350"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>车辆状态 <span class="required">*</span></label>
-                    <select name="status" required>
-                        <option value="AVAILABLE">可用</option>
-                        <option value="RENTED">已租</option>
-                        <option value="REPAIR">维修中</option>
-                        <option value="OFFLINE">下架</option>
-                    </select></div>
-                <div class="form-group"><label>车位编号</label><input name="parkingSpot" placeholder="如：A-01"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>入库时间</label><input name="parkingTime" type="datetime-local"></div>
-            </div>
-            <div class="form-group">
-                <label>车辆图片 <span style="color:#8c8f9c;font-weight:400;">（支持多选，可拖拽排序）</span></label>
-                <input type="file" name="images" accept="image/*" multiple onchange="previewUploadImages(this)" style="padding:8px;">
-                <div id="imagePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
-                <input type="hidden" name="imageUrls" id="hiddenImageUrls">
-            </div>
-            <div class="form-group"><label>描述</label><textarea name="description" placeholder="车辆描述..."></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary" id="submitVehicleBtn">确认新增</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('vehicleForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitVehicleBtn');
-        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
-
-        const form = this;
-        const fd = new FormData(form);
-
-        // 先上传图片
-        let imageUrls = '';
-        const imageFiles = fd.getAll('images').filter(f => f.name);
-        if (imageFiles.length > 0) {
-            try {
-                const uploadFd = new FormData();
-                imageFiles.forEach(f => uploadFd.append('files', f));
-                const uploadRes = await fetch(API + '/api/upload/images', { method: 'POST', body: uploadFd });
-                const uploadData = await uploadRes.json();
-                if (uploadData.code === 200) {
-                    imageUrls = uploadData.data.urlString || '';
+        // Charts
+        function renderCharts() { renderPie(); renderBar(); }
+        function renderPie() {
+            const el = document.getElementById('chartPie'); if(!el) return;
+            const c = echarts.init(el); const sc = {}; vehicles.value.forEach(v=>{ const s=v.status||'UNKNOWN'; sc[s]=(sc[s]||0)+1; });
+            c.setOption({ tooltip:{trigger:'item'}, series:[{ type:'pie', radius:['45%','70%'], center:['50%','45%'], label:{formatter:'{b}\n{d}%'},
+                data: Object.entries(VEHICLE_STATUS).map(([k,v])=>({name:v,value:sc[k]||0})) }],
+                color:['#16a34a','#2563eb','#d97706','#94a3b8'] });
+        }
+        function renderBar() {
+            const el = document.getElementById('chartBar'); if(!el) return;
+            const c = echarts.init(el); const bc = {}; vehicles.value.forEach(v=>{ const b=v.brand||'未知'; bc[b]=(bc[b]||0)+1; });
+            const sorted = Object.entries(bc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+            c.setOption({ tooltip:{trigger:'axis'}, grid:{left:'3%',right:'5%',bottom:'3%',containLabel:true}, xAxis:{type:'category',data:sorted.map(s=>s[0]),axisLabel:{rotate:30,fontSize:10}}, yAxis:{type:'value'}, series:[{type:'bar',data:sorted.map(s=>s[1]),itemStyle:{borderRadius:[6,6,0,0],color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#2563eb'},{offset:1,color:'#93c5fd'}])}}] });
+        }
+        function renderStatsCharts() {
+            nextTick(()=>{
+                const el1=document.getElementById('chartLine'), el2=document.getElementById('chartGauge');
+                if(el1) {
+                    const dr={}; orders.value.forEach(o=>{ const d=(o.createTime||o.pickupTime||'').substring(0,10); if(d) dr[d]=(dr[d]||0)+(Number(o.finalAmount||o.totalAmount||0)); });
+                    const dates=Object.keys(dr).sort().slice(-14);
+                    const c=echarts.init(el1); c.setOption({ tooltip:{trigger:'axis'}, grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true}, xAxis:{type:'category',data:dates,axisLabel:{rotate:30,fontSize:10}}, yAxis:{type:'value'}, series:[{type:'line',data:dates.map(d=>dr[d]),smooth:true,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(37,99,235,.3)'},{offset:1,color:'rgba(37,99,235,.02)'}]}}}] });
                 }
-            } catch(err) {
-                toast('图片上传失败', 'error');
-                btn.disabled = false; btn.innerHTML = '确认新增';
-                return;
-            }
-        }
-
-        // 组装车辆数据
-        const data = {};
-        for (const [k, v] of fd.entries()) {
-            if (k === 'images') continue;
-            data[k] = v;
-        }
-        data.imageUrls = imageUrls;
-        data.seatCount = parseInt(data.seatCount) || 5;
-        data.dailyPrice = parseFloat(data.dailyPrice) || 0;
-        if (data.parkingTime) {
-            data.parkingTime = data.parkingTime + ':00';
-        }
-        const res = await $post('/api/vehicle/add', data);
-        if (res.code === 200) { closeModal(); toast('车辆添加成功！'); showPage('vehicles'); }
-        else { toast(res.msg || '添加失败', 'error'); }
-    });
-}
-
-async function showEditVehicle(id) {
-    const res = await $get('/api/vehicle/detail/' + id);
-    if (res.code !== 200) { toast('车辆不存在', 'error'); return; }
-    const v = res.data;
-    const pTime = v.parkingTime ? v.parkingTime.replace(' ', 'T').substring(0, 16) : '';
-    openModal(`
-        <div class="modal-header"><h3>✏️ 编辑车辆</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="editVehicleForm" enctype="multipart/form-data">
-            <div class="form-row">
-                <div class="form-group"><label>品牌 <span class="required">*</span></label><input name="brand" value="${v.brand||''}" required></div>
-                <div class="form-group"><label>型号 <span class="required">*</span></label><input name="model" value="${v.model||''}" required></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>车牌 <span class="required">*</span></label><input name="plateNumber" value="${v.plateNumber||''}" required></div>
-                <div class="form-group"><label>颜色</label><input name="color" value="${v.color||''}"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>座位数</label><input name="seatCount" type="number" value="${v.seatCount||5}"></div>
-                <div class="form-group"><label>日租金 (元)</label><input name="dailyPrice" type="number" step="0.01" value="${v.dailyPrice||0}"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>车辆状态</label>
-                    <select name="status">
-                        <option value="AVAILABLE" ${v.status==='AVAILABLE'?'selected':''}>可用</option>
-                        <option value="RENTED" ${v.status==='RENTED'?'selected':''}>已租</option>
-                        <option value="REPAIR" ${v.status==='REPAIR'?'selected':''}>维修中</option>
-                        <option value="OFFLINE" ${v.status==='OFFLINE'?'selected':''}>下架</option>
-                    </select></div>
-                <div class="form-group"><label>车位编号</label><input name="parkingSpot" value="${v.parkingSpot||''}" placeholder="如：A-01"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>入库时间</label><input name="parkingTime" type="datetime-local" value="${pTime}"></div>
-            </div>
-            <div class="form-group">
-                <label>车辆图片 <span style="color:#8c8f9c;font-weight:400;">（上传新图会替换旧图）</span></label>
-                ${v.imageUrls ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">' + v.imageUrls.split(',').filter(u=>u.trim()).map(u => '<img src="' + u.trim() + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #e8e8e8;" onerror="this.style.display=\'none\'">').join('') + '</div>' : ''}
-                <input type="file" name="images" accept="image/*" multiple onchange="previewUploadImages(this)" style="padding:8px;">
-                <div id="imagePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
-                <input type="hidden" name="imageUrls" value="${v.imageUrls||''}">
-            </div>
-            <div class="form-group"><label>描述</label><textarea name="description">${v.description||''}</textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary" id="editVehicleBtn">保存修改</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('editVehicleForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('editVehicleBtn');
-        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
-
-        const form = this;
-        const fd = new FormData(form);
-
-        // 上传新图片
-        let imageUrls = fd.get('imageUrls') || '';
-        const imageFiles = fd.getAll('images').filter(f => f.name);
-        if (imageFiles.length > 0) {
-            try {
-                const uploadFd = new FormData();
-                imageFiles.forEach(f => uploadFd.append('files', f));
-                const uploadRes = await fetch(API + '/api/upload/images', { method: 'POST', body: uploadFd });
-                const uploadData = await uploadRes.json();
-                if (uploadData.code === 200) {
-                    imageUrls = uploadData.data.urlString || '';
-                }
-            } catch(err) {
-                toast('图片上传失败', 'error');
-                btn.disabled = false; btn.innerHTML = '保存修改';
-                return;
-            }
-        }
-
-        const data = {};
-        for (const [k, v] of fd.entries()) {
-            if (k === 'images') continue;
-            data[k] = v;
-        }
-        data.imageUrls = imageUrls;
-        data.seatCount = parseInt(data.seatCount) || 5;
-        data.dailyPrice = parseFloat(data.dailyPrice) || 0;
-        if (data.parkingTime) {
-            data.parkingTime = data.parkingTime + ':00';
-        }
-        const r = await $put('/api/vehicle/edit/' + id, data);
-        btn.disabled = false; btn.innerHTML = '保存修改';
-        if (r.code === 200) { closeModal(); toast('修改成功！'); showPage('vehicles'); }
-        else { toast(r.msg || '修改失败', 'error'); }
-    });
-}
-
-async function showVehicleDetail(id) {
-    const res = await $get('/api/vehicle/detail/' + id);
-    if (res.code !== 200) { toast('车辆不存在', 'error'); return; }
-    const v = res.data;
-    const cls = (v.status || '').toLowerCase();
-    openModal(`
-        <div class="modal-header"><h3>🚗 车辆详情</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div><strong>品牌</strong><br>${v.brand||'-'}</div><div><strong>型号</strong><br>${v.model||'-'}</div>
-            <div><strong>车牌</strong><br>${v.plateNumber||'-'}</div><div><strong>颜色</strong><br>${v.color||'-'}</div>
-            <div><strong>座位数</strong><br>${v.seatCount||0}座</div><div><strong>日租金</strong><br>¥${v.dailyPrice||0}</div>
-            <div><strong>状态</strong><br><span class="status-badge ${cls}">${VEHICLE_STATUS_MAP[v.status]||v.status}</span></div>
-            <div><strong>车位</strong><br>${v.parkingSpot||'未入库'}</div>
-        </div>
-        ${v.description ? `<div style="margin-top:12px;"><strong>描述</strong><p style="color:#8c8f9c;">${v.description}</p></div>` : ''}
-        <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button></div>
-    `);
-}
-
-async function setRepair(id) {
-    openModal(`
-        <div class="modal-header"><h3>🔧 设为维修</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="repairForm">
-            <div class="form-group"><label>维修原因 <span class="required">*</span></label><textarea name="reason" required placeholder="请描述故障情况..."></textarea></div>
-            <div class="form-group"><label>预计完成时间 <span class="required">*</span></label><input name="expectedTime" type="datetime-local" required></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-warning">确认维修</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('repairForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const reason = fd.get('reason');
-        const expectedTime = fd.get('expectedTime').replace('T',' ') + ':00';
-        const r = await $post(`/api/vehicle/repair?id=${id}&reason=${encodeURIComponent(reason)}&expectedTime=${encodeURIComponent(expectedTime)}`);
-        if (r.code === 200) { closeModal(); toast('已设为维修状态'); showPage('vehicles'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-async function completeRepair(id) {
-    if (!await showConfirm('维修完成', '确认该车辆已维修完成，恢复为可用状态？', '🔧', '确认完成', 'btn-success')) return;
-    const r = await $post('/api/vehicle/repairComplete/' + id);
-    if (r.code === 200) { toast('维修完成！'); showPage('vehicles'); }
-    else { toast(r.msg || '操作失败', 'error'); }
-}
-
-async function exportVehicles() {
-    try {
-        const res = await $get('/api/vehicle/export');
-        if (res.code === 200) {
-            toast('导出成功！文件路径: ' + (res.data || res.msg));
-        } else {
-            toast(res.msg || '导出失败', 'error');
-        }
-    } catch(e) {
-        toast('导出请求失败', 'error');
-    }
-}
-
-async function showParking(id) {
-    openModal(`
-        <div class="modal-header"><h3>📦 车辆入库</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="parkingForm">
-            <div class="form-group"><label>车位编号 <span class="required">*</span></label><input name="parkingSpot" required placeholder="如：A-01"></div>
-            <div class="form-group"><label>入库时间 <span class="required">*</span></label><input name="parkingTime" type="datetime-local" required></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-success">确认入库</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('parkingForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const parkingSpot = fd.get('parkingSpot');
-        const parkingTime = fd.get('parkingTime').replace('T',' ') + ':00';
-        const r = await $post(`/api/vehicle/parking?id=${id}&parkingSpot=${encodeURIComponent(parkingSpot)}&parkingTime=${encodeURIComponent(parkingTime)}`);
-        if (r.code === 200) { closeModal(); toast('入库成功！'); showPage('vehicles'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-// ============================================================
-// 5. 客户管理
-// ============================================================
-async function renderCustomers() {
-    const res = await $get('/api/customer/list');
-    const customers = res.code === 200 ? res.data : [];
-    return `
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="showAddCustomer()"><i class="fas fa-user-plus"></i> 新增客户</button>
-            <input class="search-input" placeholder="🔍 搜索姓名/手机号..." oninput="filterTable(this)" data-table="custTable">
-            <select onchange="filterTable(this)" data-table="custTable" data-col="5">
-                <option value="">全部</option><option value="正常">正常</option><option value="黑名单">黑名单</option>
-            </select>
-        </div>
-        <div class="table-container">
-            <table><thead><tr>
-                <th>姓名</th><th>手机号</th><th>身份证</th><th>驾照号</th><th>积分</th><th>状态</th><th>操作</th>
-            </tr></thead>
-            <tbody id="custTable">
-                ${customers.map(c => {
-                    const cls = c.status === 'BLACKLIST' ? 'blacklist' : 'normal';
-                    const label = c.status === 'BLACKLIST' ? '黑名单' : '正常';
-                    return `<tr>
-                        <td><strong>${c.name||''}</strong></td>
-                        <td>${c.phone||''}</td>
-                        <td>${c.idCard||''}</td>
-                        <td>${c.license||''}</td>
-                        <td>${c.points||0}</td>
-                        <td><span class="status-badge ${cls}">${label}</span></td>
-                        <td><div class="table-actions">
-                            <button class="btn-sm btn-primary" onclick="showCustomerDetail(${c.id})">详情</button>
-                            <button class="btn-sm btn-warning" onclick="showEditCustomer(${c.id})">编辑</button>
-                            <button class="btn-sm btn-outline" onclick="showAddPoints(${c.id}, '${c.name}')">➕积分</button>
-                            ${c.status !== 'BLACKLIST'
-                                ? `<button class="btn-sm btn-danger" onclick="blacklistCustomer(${c.id})">黑名单</button>`
-                                : `<button class="btn-sm btn-success" onclick="unblacklistCustomer(${c.id})">移出</button>`}
-                        </div></td>
-                    </tr>`;
-                }).join('')}
-            </tbody></table>
-        </div>`;
-}
-
-async function showAddCustomer() {
-    openModal(`
-        <div class="modal-header"><h3>👤 新增客户</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="custForm">
-            <div class="form-row">
-                <div class="form-group"><label>姓名 <span class="required">*</span></label><input name="name" required></div>
-                <div class="form-group"><label>手机号 <span class="required">*</span></label><input name="phone" required></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>身份证号 <span class="required">*</span></label><input name="idCard" required></div>
-                <div class="form-group"><label>驾驶证号 <span class="required">*</span></label><input name="license" required></div>
-            </div>
-            <div class="form-group"><label>备注</label><textarea name="remark"></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">确认新增</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('custForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const data = Object.fromEntries(fd.entries());
-        const r = await $post('/api/customer/add', data);
-        if (r.code === 200) { closeModal(); toast('客户创建成功！'); showPage('customers'); }
-        else { toast(r.msg || '创建失败', 'error'); }
-    });
-}
-
-async function showEditCustomer(id) {
-    const res = await $get('/api/customer/detail/' + id);
-    if (res.code !== 200) { toast('客户不存在', 'error'); return; }
-    const c = res.data;
-    openModal(`
-        <div class="modal-header"><h3>✏️ 编辑客户</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="editCustForm">
-            <div class="form-row">
-                <div class="form-group"><label>姓名</label><input name="name" value="${c.name||''}" required></div>
-                <div class="form-group"><label>手机号</label><input name="phone" value="${c.phone||''}" required></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>身份证号</label><input name="idCard" value="${c.idCard||''}" required></div>
-                <div class="form-group"><label>驾驶证号</label><input name="license" value="${c.license||''}" required></div>
-            </div>
-            <div class="form-group"><label>备注</label><textarea name="remark">${c.remark||''}</textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">保存修改</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('editCustForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const data = Object.fromEntries(fd.entries());
-        const r = await $put('/api/customer/edit/' + id, data);
-        if (r.code === 200) { closeModal(); toast('修改成功！'); showPage('customers'); }
-        else { toast(r.msg || '修改失败', 'error'); }
-    });
-}
-
-async function showCustomerDetail(id) {
-    const res = await $get('/api/customer/detail/' + id);
-    if (res.code !== 200) { toast('客户不存在', 'error'); return; }
-    const c = res.data;
-    const cls = c.status === 'BLACKLIST' ? 'blacklist' : 'normal';
-    const label = c.status === 'BLACKLIST' ? '黑名单' : '正常';
-
-    // 并行获取该客户的订单和违章记录
-    let ordersHtml = '<p style="color:#8c8f9c;">加载中...</p>';
-    let violationsHtml = '<p style="color:#8c8f9c;">加载中...</p>';
-
-    openModal(`
-        <div class="modal-header"><h3>👤 客户详情 - ${c.name}</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div><strong>姓名</strong><br>${c.name||'-'}</div><div><strong>手机号</strong><br>${c.phone||'-'}</div>
-            <div><strong>身份证</strong><br>${c.idCard||'-'}</div><div><strong>驾照号</strong><br>${c.license||'-'}</div>
-            <div><strong>积分</strong><br>${c.points||0}</div>
-            <div><strong>状态</strong><br><span class="status-badge ${cls}">${label}</span></div>
-        </div>
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #f0f0f0;">
-            <h4>📋 历史订单 <span id="orderCount" style="font-weight:400;font-size:13px;color:#8c8f9c;"></span></h4>
-            <div id="customerOrders">${ordersHtml}</div>
-        </div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;">
-            <h4>⚠️ 违章记录 <span id="violCount" style="font-weight:400;font-size:13px;color:#8c8f9c;"></span></h4>
-            <div id="customerViolations">${violationsHtml}</div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline" onclick="closeModal()">关闭</button>
-            <button class="btn btn-primary" onclick="closeModal();showAddViolationForCustomer('${c.name}')">➕ 新增违章</button>
-        </div>
-    `);
-
-    // 异步加载订单和违章
-    try {
-        const or = await $get('/api/order/list?customerName=' + encodeURIComponent(c.name));
-        if (or.code === 200 && or.data) {
-            const orders = or.data;
-            document.getElementById('orderCount').textContent = ' (' + orders.length + '条)';
-            document.getElementById('customerOrders').innerHTML = orders.length ? orders.map(o =>
-                `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;">
-                    <span><strong>${o.orderNo}</strong> - ${o.vehicleBrand||''} ${o.vehicleModel||''} ${o.vehiclePlate||''}</span>
-                    <span>${o.pickupTime||'-'} ~ ${o.returnTime||'-'} | <span class="status-badge ${(o.status||'').toLowerCase()}">${ORDER_STATUS_MAP[o.status]||o.status}</span> | ¥${o.finalAmount||o.totalAmount||0}</span>
-                </div>`
-            ).join('') : '<p style="color:#8c8f9c;">暂无订单记录</p>';
-        }
-    } catch(e) {
-        document.getElementById('customerOrders').innerHTML = '<p style="color:#f5222d;">加载失败</p>';
-    }
-
-    try {
-        const vr = await $get('/api/violation/list?customerName=' + encodeURIComponent(c.name));
-        if (vr.code === 200 && vr.data) {
-            const viols = vr.data;
-            document.getElementById('violCount').textContent = ' (' + viols.length + '条)';
-            document.getElementById('customerViolations').innerHTML = viols.length ? viols.map(v =>
-                `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;">
-                    <span>${v.violationTime||'-'} | ${v.location||'-'} | ${v.vehiclePlate||'-'}</span>
-                    <span>扣${v.points||0}分 罚¥${v.fineAmount||0} | <span class="status-badge ${v.status==='RESOLVED'?'resolved':'repair'}">${v.status==='RESOLVED'?'已处理':'待处理'}</span></span>
-                </div>`
-            ).join('') : '<p style="color:#8c8f9c;">暂无违章记录</p>';
-        }
-    } catch(e) {
-        document.getElementById('customerViolations').innerHTML = '<p style="color:#f5222d;">加载失败</p>';
-    }
-}
-
-function showAddViolationForCustomer(customerName) {
-    showAddViolation();
-    setTimeout(() => {
-        const nameInput = document.querySelector('#modalContent input[name="customerName"]');
-        if (nameInput) nameInput.value = customerName;
-    }, 100);
-}
-
-async function blacklistCustomer(id) {
-    openModal(`
-        <div class="modal-header"><h3>⚠️ 加入黑名单</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="blForm">
-            <div class="form-group"><label>原因 <span class="required">*</span></label><textarea name="reason" required></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-danger">确认加入</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('blForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const reason = new FormData(this).get('reason');
-        const r = await $post(`/api/customer/blacklist/${id}?reason=${encodeURIComponent(reason)}`);
-        if (r.code === 200) { closeModal(); toast('已加入黑名单', 'error'); showPage('customers'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-async function unblacklistCustomer(id) {
-    if (!await showConfirm('移出黑名单', '确认将该客户移出黑名单，恢复其租车权限？', '✅', '确认移出', 'btn-success')) return;
-    const r = await $post('/api/customer/unblacklist/' + id);
-    if (r.code === 200) { toast('已移出黑名单'); showPage('customers'); }
-    else { toast(r.msg || '操作失败', 'error'); }
-}
-
-function showAddPoints(id, name) {
-    openModal(`
-        <div class="modal-header"><h3>⭐ 增加积分 - ${name||''}</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="pointsForm">
-            <div class="form-group"><label>增加积分数 <span class="required">*</span></label>
-                <input name="points" type="number" required min="1" value="10" placeholder="请输入积分数"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">确认增加</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('pointsForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const points = new FormData(this).get('points');
-        const r = await $post('/api/customer/addPoints/' + id + '?points=' + points);
-        if (r.code === 200) { closeModal(); toast('积分已增加！'); showPage('customers'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-// ============================================================
-// 6. 订单管理
-// ============================================================
-const ORDER_STATUS_MAP = {
-    'PENDING':'待取车','PICKED_UP':'已取车','RETURNED':'已还车','CANCELLED':'已取消','COMPLETED':'已完成'
-};
-
-async function renderOrders() {
-    const res = await $get('/api/order/list');
-    const orders = res.code === 200 ? res.data : [];
-    return `
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="showCreateOrder()"><i class="fas fa-plus"></i> 创建订单</button>
-            <input class="search-input" placeholder="🔍 订单号/客户/车牌..." oninput="filterTable(this)" data-table="orderTable">
-            <select onchange="filterTable(this)" data-table="orderTable" data-col="7">
-                <option value="">全部状态</option>
-                <option value="待取车">待取车</option><option value="已取车">已取车</option>
-                <option value="已还车">已还车</option><option value="已取消">已取消</option><option value="已完成">已完成</option>
-            </select>
-        </div>
-        <div class="table-container">
-            <table><thead><tr>
-                <th>订单号</th><th>客户</th><th>车辆</th><th>取车时间</th><th>还车时间</th>
-                <th>天数</th><th>金额</th><th>状态</th><th>操作</th>
-            </tr></thead>
-            <tbody id="orderTable">
-                ${orders.map(o => {
-                    const cls = (o.status||'').toLowerCase();
-                    return `<tr>
-                        <td><strong>${o.orderNo||''}</strong></td>
-                        <td>${o.customerName||''}</td>
-                        <td>${o.vehicleBrand||''} ${o.vehicleModel||''}</td>
-                        <td>${o.pickupTime||'-'}</td>
-                        <td>${o.returnTime||'-'}</td>
-                        <td>${o.rentDays||0}天</td>
-                        <td>¥${o.totalAmount||0}</td>
-                        <td><span class="status-badge ${cls}">${ORDER_STATUS_MAP[o.status]||o.status}</span></td>
-                        <td><div class="table-actions">
-                            <button class="btn-sm btn-primary" onclick="showOrderDetail(${o.id})">详情</button>
-                            ${o.status==='PENDING'?`
-                                <button class="btn-sm btn-success" onclick="confirmPickup(${o.id})">取车</button>
-                                <button class="btn-sm btn-danger" onclick="cancelOrder(${o.id})">取消</button>`:''}
-                            ${o.status==='PICKED_UP'?`
-                                <button class="btn-sm btn-success" onclick="showReturnModal(${o.id})">还车</button>`:''}
-                            ${o.status==='RETURNED'?`
-                                <button class="btn-sm btn-warning" onclick="showMarkAbnormal(${o.id})">标记异常</button>`:''}
-                        </div></td>
-                    </tr>`;
-                }).join('')}
-            </tbody></table>
-        </div>`;
-}
-
-async function showCreateOrder() {
-    // 需要先获取客户和车辆列表
-    let customers = [], vehicles = [];
-    try {
-        const [cr, vr] = await Promise.all([$get('/api/customer/list'), $get('/api/vehicle/list')]);
-        customers = cr.code === 200 ? cr.data : [];
-        vehicles = vr.code === 200 ? vr.data.filter(v => v.status === 'AVAILABLE') : [];
-    } catch(e) {}
-
-    openModal(`
-        <div class="modal-header"><h3>📋 创建订单</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="orderForm">
-            <div class="form-group"><label>选择客户 <span class="required">*</span></label>
-                <select name="customerId" required>
-                    <option value="">-- 请选择 --</option>
-                    ${customers.map(c => `<option value="${c.id}">${c.name} (${c.phone})</option>`).join('')}
-                </select>
-            </div>
-            <div class="form-group"><label>选择车辆 <span class="required">*</span></label>
-                <select name="vehicleId" required>
-                    <option value="">-- 请选择 --</option>
-                    ${vehicles.map(v => `<option value="${v.id}">${v.brand} ${v.model} ${v.plateNumber} ¥${v.dailyPrice}/日</option>`).join('')}
-                </select>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>取车时间 <span class="required">*</span></label><input name="pickupTime" type="datetime-local" required></div>
-                <div class="form-group"><label>还车时间 <span class="required">*</span></label><input name="returnTime" type="datetime-local" required></div>
-            </div>
-            <div class="form-group"><label>备注</label><textarea name="remark"></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">提交订单</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('orderForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const data = {
-            customerId: parseInt(fd.get('customerId')),
-            vehicleId: parseInt(fd.get('vehicleId')),
-            pickupTime: fd.get('pickupTime') + ':00',
-            returnTime: fd.get('returnTime') + ':00',
-            remark: fd.get('remark') || ''
-        };
-        const r = await $post('/api/order/create', data);
-        if (r.code === 200) { closeModal(); toast('订单创建成功！'); showPage('orders'); }
-        else { toast(r.msg || '创建失败', 'error'); }
-    });
-}
-
-async function showOrderDetail(id) {
-    const res = await $get('/api/order/detail/' + id);
-    if (res.code !== 200) { toast('订单不存在', 'error'); return; }
-    const o = res.data;
-    const cls = (o.status||'').toLowerCase();
-    openModal(`
-        <div class="modal-header"><h3>📋 订单详情 - ${o.orderNo}</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div><strong>订单号</strong><br>${o.orderNo}</div>
-            <div><strong>客户</strong><br>${o.customerName||'-'}</div>
-            <div><strong>车辆</strong><br>${o.vehicleBrand||''} ${o.vehicleModel||''}</div>
-            <div><strong>车牌</strong><br>${o.vehiclePlate||'-'}</div>
-            <div><strong>状态</strong><br><span class="status-badge ${cls}">${ORDER_STATUS_MAP[o.status]||o.status}</span></div>
-            <div><strong>取车时间</strong><br>${o.pickupTime||'-'}</div>
-            <div><strong>还车时间</strong><br>${o.returnTime||'-'}</div>
-            <div><strong>实际还车</strong><br>${o.actualReturnTime||'-'}</div>
-            <div><strong>租期</strong><br>${o.rentDays||0}天</div>
-            <div><strong>总金额</strong><br>¥${o.totalAmount||0}</div>
-            <div><strong>最终金额</strong><br>¥${o.finalAmount||o.totalAmount||0}</div>
-            <div><strong>押金</strong><br>¥${o.depositAmount||0}</div>
-        </div>
-        <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button></div>
-    `);
-}
-
-async function confirmPickup(id) {
-    if (!await showConfirm('确认取车', '确认客户已取走车辆？订单状态将变更为"已取车"。', '🚗', '确认取车', 'btn-success')) return;
-    const r = await $post('/api/order/pickup/' + id);
-    if (r.code === 200) { toast('确认取车成功！'); showPage('orders'); }
-    else { toast(r.msg || '操作失败', 'error'); }
-}
-
-async function cancelOrder(id) {
-    openModal(`
-        <div class="modal-header"><h3>❌ 取消订单</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="cancelForm">
-            <div class="form-group"><label>取消原因 <span class="required">*</span></label>
-                <select name="reason" required>
-                    <option value="客户主动取消">客户主动取消</option>
-                    <option value="车辆故障">车辆故障</option>
-                    <option value="其他原因">其他原因</option>
-                </select>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">返回</button>
-                <button type="submit" class="btn btn-danger">确认取消</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('cancelForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const reason = new FormData(this).get('reason');
-        const r = await $post(`/api/order/cancel/${id}?reason=${encodeURIComponent(reason)}`);
-        if (r.code === 200) { closeModal(); toast('订单已取消'); showPage('orders'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-async function showReturnModal(id) {
-    openModal(`
-        <div class="modal-header"><h3>🔄 还车处理</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="returnForm">
-            <div class="form-group"><label>实际还车时间 <span class="required">*</span></label>
-                <input name="actualReturnTime" type="datetime-local" required></div>
-            <div class="form-group"><label>车况描述 <span class="required">*</span></label>
-                <textarea name="carCondition" required placeholder="请描述车辆状况..."></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-success">确认还车</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('returnForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const actualReturnTime = fd.get('actualReturnTime').replace('T',' ') + ':00';
-        const carCondition = fd.get('carCondition');
-        const params = `orderId=${id}&actualReturnTime=${encodeURIComponent(actualReturnTime)}&carCondition=${encodeURIComponent(carCondition)}`;
-        const r = await $post('/api/order/return?' + params);
-        if (r.code === 200) { closeModal(); toast('还车成功！'); showPage('orders'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-async function showMarkAbnormal(id) {
-    openModal(`
-        <div class="modal-header"><h3>⚠️ 标记异常</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="abnormalForm">
-            <div class="form-group"><label>异常类型 <span class="required">*</span></label>
-                <select name="type" required>
-                    <option value="车辆损坏">车辆损坏</option>
-                    <option value="违章未处理">违章未处理</option>
-                    <option value="逾期未还">逾期未还</option>
-                    <option value="其他">其他</option>
-                </select></div>
-            <div class="form-group"><label>备注 <span class="required">*</span></label><textarea name="remark" required placeholder="详细描述..."></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-warning">确认标记</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('abnormalForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const params = `orderId=${id}&type=${encodeURIComponent(fd.get('type'))}&remark=${encodeURIComponent(fd.get('remark'))}`;
-        const r = await $post('/api/order/markAbnormal?' + params);
-        if (r.code === 200) { closeModal(); toast('已标记异常！'); showPage('orders'); }
-        else { toast(r.msg || '操作失败', 'error'); }
-    });
-}
-
-// ============================================================
-// 7. 违章管理
-// ============================================================
-async function renderViolations() {
-    const res = await $get('/api/violation/list');
-    const violations = res.code === 200 ? res.data : [];
-    return `
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="showAddViolation()"><i class="fas fa-plus"></i> 新增违章</button>
-            <input class="search-input" placeholder="🔍 订单号/客户/车牌..." oninput="filterTable(this)" data-table="violTable">
-            <select onchange="filterTable(this)" data-table="violTable" data-col="7">
-                <option value="">全部</option><option value="待处理">待处理</option><option value="已处理">已处理</option>
-            </select>
-        </div>
-        <div class="table-container">
-            <table><thead><tr>
-                <th>订单号</th><th>客户</th><th>车牌</th><th>违章时间</th><th>地点</th>
-                <th>扣分</th><th>罚款</th><th>状态</th><th>操作</th>
-            </tr></thead>
-            <tbody id="violTable">
-                ${violations.map(v => {
-                    const cls = v.status === 'RESOLVED' ? 'resolved' : 'repair';
-                    return `<tr>
-                        <td>${v.orderNo||'-'}</td>
-                        <td>${v.customerName||'-'}</td>
-                        <td>${v.vehiclePlate||'-'}</td>
-                        <td>${v.violationTime||'-'}</td>
-                        <td>${v.location||'-'}</td>
-                        <td style="color:#f5222d;">${v.points||0}分</td>
-                        <td style="color:#f5222d;">¥${v.fineAmount||0}</td>
-                        <td><span class="status-badge ${cls}">${v.status==='RESOLVED'?'已处理':'待处理'}</span></td>
-                        <td><div class="table-actions">
-                            <button class="btn-sm btn-primary" onclick="showViolationDetail(${v.id})">详情</button>
-                            ${v.status==='PENDING'?`<button class="btn-sm btn-success" onclick="resolveViolation(${v.id})">处理完成</button>`:''}
-                        </div></td>
-                    </tr>`;
-                }).join('')}
-            </tbody></table>
-        </div>`;
-}
-
-async function showAddViolation() {
-    openModal(`
-        <div class="modal-header"><h3>⚠️ 新增违章</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="violForm">
-            <div class="form-group"><label>订单号 <span class="required">*</span></label><input name="orderNo" required></div>
-            <div class="form-group"><label>客户姓名 <span class="required">*</span></label><input name="customerName" required></div>
-            <div class="form-group"><label>车牌号 <span class="required">*</span></label><input name="vehiclePlate" required></div>
-            <div class="form-row">
-                <div class="form-group"><label>违章时间 <span class="required">*</span></label><input name="violationTime" type="datetime-local" required></div>
-                <div class="form-group"><label>违章地点 <span class="required">*</span></label><input name="location" required></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>扣分</label><input name="points" type="number" value="0"></div>
-                <div class="form-group"><label>罚款金额 (元)</label><input name="fineAmount" type="number" step="0.01" value="0"></div>
-            </div>
-            <div class="form-group"><label>备注</label><textarea name="remark"></textarea></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">确认新增</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('violForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const data = Object.fromEntries(fd.entries());
-        data.violationTime = data.violationTime + ':00';
-        data.points = parseInt(data.points) || 0;
-        data.fineAmount = parseFloat(data.fineAmount) || 0;
-        const r = await $post('/api/violation/add', data);
-        if (r.code === 200) { closeModal(); toast('违章记录创建成功！'); showPage('violations'); }
-        else { toast(r.msg || '创建失败', 'error'); }
-    });
-}
-
-async function showViolationDetail(id) {
-    const res = await $get('/api/violation/detail/' + id);
-    if (res.code !== 200) { toast('违章记录不存在', 'error'); return; }
-    const v = res.data;
-    const cls = v.status === 'RESOLVED' ? 'resolved' : 'repair';
-    openModal(`
-        <div class="modal-header"><h3>⚠️ 违章详情</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div><strong>订单号</strong><br>${v.orderNo||'-'}</div>
-            <div><strong>客户</strong><br>${v.customerName||'-'}</div>
-            <div><strong>车牌</strong><br>${v.vehiclePlate||'-'}</div>
-            <div><strong>状态</strong><br><span class="status-badge ${cls}">${v.status==='RESOLVED'?'已处理':'待处理'}</span></div>
-            <div><strong>违章时间</strong><br>${v.violationTime||'-'}</div>
-            <div><strong>地点</strong><br>${v.location||'-'}</div>
-            <div><strong>扣分</strong><br><span style="color:#f5222d;">${v.points||0}分</span></div>
-            <div><strong>罚款</strong><br><span style="color:#f5222d;">¥${v.fineAmount||0}</span></div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline" onclick="closeModal()">关闭</button>
-            <button class="btn btn-primary" onclick="toast('通知书已发送至打印机', 'success')"><i class="fas fa-print"></i> 打印通知书</button>
-        </div>
-    `);
-}
-
-async function resolveViolation(id) {
-    if (!await showConfirm('标记已处理', '确认该违章已处理完毕？', '✅', '确认处理', 'btn-success')) return;
-    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-    const resolver = user.realName || user.username || '系统管理员';
-    const r = await $post(`/api/violation/resolve/${id}?resolver=${encodeURIComponent(resolver)}`);
-    if (r.code === 200) { toast('已标记为已处理'); showPage('violations'); }
-    else { toast(r.msg || '操作失败', 'error'); }
-}
-
-// ============================================================
-// 8. 统计报表
-// ============================================================
-async function renderStatistics() {
-    let stats = null;
-    try { const r = await $get('/api/statistics/overview'); if (r.code===200) stats = r.data; } catch(e) {}
-    const totalOrders = stats?.totalOrders ?? 0;
-    const totalRevenue = Number(stats?.totalRevenue ?? 0);
-    const totalProfit = Number(stats?.totalProfit ?? 0);
-    const activeVehicles = stats?.activeVehicles ?? 0;
-    const totalCustomers = stats?.totalCustomers ?? 0;
-
-    // 异步加载热门车型
-    let hotVehiclesHtml = '<p style="color:#8c8f9c;">加载中...</p>';
-    let violStatsHtml = '<p style="color:#8c8f9c;">加载中...</p>';
-
-    const html = `
-        <div class="action-bar" style="margin-bottom:16px;">
-            <span style="font-size:14px;color:#3d3f4e;font-weight:600;">时间维度：</span>
-            <button class="btn btn-primary active" id="dimToday" onclick="switchTimeDim('today')">📅 今日</button>
-            <button class="btn btn-outline" id="dimMonth" onclick="switchTimeDim('month')">📆 本月</button>
-            <button class="btn btn-outline" id="dimYear" onclick="switchTimeDim('year')">📊 本年</button>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-card"><div class="label">📋 总订单量</div><div class="value">${totalOrders}</div></div>
-            <div class="stat-card gold"><div class="label">💰 总收入</div><div class="value">¥${totalRevenue.toLocaleString()}</div></div>
-            <div class="stat-card green"><div class="label">📈 预估利润</div><div class="value">¥${totalProfit.toLocaleString()}</div></div>
-            <div class="stat-card purple"><div class="label">🚗 可用车辆</div><div class="value">${activeVehicles}</div></div>
-            <div class="stat-card"><div class="label">👥 客户总数</div><div class="value">${totalCustomers}</div></div>
-        </div>
-        <!-- 图表行 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4>📈 订单收入趋势</h4>
-                <div id="chartRevenueTrend" style="height:280px;"></div>
-            </div>
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4>🚗 车辆出租率</h4>
-                <div id="chartUtilRate" style="height:280px;"></div>
-            </div>
-        </div>
-        <!-- 排行行 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4>🏆 热门车型排行</h4>
-                <div id="hotVehicles">${hotVehiclesHtml}</div>
-            </div>
-            <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <h4>⚠️ 违章车辆排行</h4>
-                <div id="violStats">${violStatsHtml}</div>
-            </div>
-        </div>`;
-
-    // 异步加载
-    setTimeout(() => { loadHotVehicles(); loadViolationStats(); loadStatsCharts(); }, 100);
-    return html;
-}
-
-async function loadHotVehicles() {
-    try {
-        const r = await $get('/api/vehicle/list');
-        if (r.code === 200 && r.data) {
-            // 按日租金降序排列模拟热度（实际应该从订单统计）
-            const vehicles = r.data.sort((a,b) => (b.dailyPrice||0) - (a.dailyPrice||0)).slice(0, 8);
-            const el = document.getElementById('hotVehicles');
-            if (el) el.innerHTML = vehicles.map((v,i) =>
-                `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;">
-                    <span>${i+1}. ${v.brand||''} ${v.model||''} ${v.plateNumber||''}</span>
-                    <span style="color:#1890ff;">¥${v.dailyPrice||0}/日</span>
-                </div>`
-            ).join('');
-        }
-    } catch(e) {}
-}
-
-async function loadViolationStats() {
-    try {
-        const r = await $get('/api/violation/statistics/byVehicle');
-        if (r.code === 200 && r.data) {
-            const data = Array.isArray(r.data) ? r.data.slice(0, 8) : [];
-            const el = document.getElementById('violStats');
-            if (el) el.innerHTML = data.length ? data.map((item,i) =>
-                `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;">
-                    <span>${i+1}. ${item[0]||'-'}</span>
-                    <span style="color:#f5222d;">${item[1]||0}次</span>
-                </div>`
-            ).join('') : '<p style="color:#8c8f9c;">暂无违章数据</p>';
-        }
-    } catch(e) { const el = document.getElementById('violStats'); if (el) el.innerHTML = '<p style="color:#8c8f9c;">暂无数据</p>'; }
-}
-
-async function loadStatsCharts() {
-    // 收入趋势图
-    try {
-        const res = await $get('/api/order/list');
-        if (res.code === 200 && res.data) {
-            const orders = res.data;
-            // 按日期聚合收入
-            const dailyRevenue = {};
-            orders.forEach(o => {
-                const date = (o.createTime || o.pickupTime || '').substring(0, 10);
-                if (date) {
-                    const amt = Number(o.finalAmount || o.totalAmount || 0);
-                    dailyRevenue[date] = (dailyRevenue[date] || 0) + amt;
+                if(el2) {
+                    const sc={}; vehicles.value.forEach(v=>{ const s=v.status||'UNKNOWN'; sc[s]=(sc[s]||0)+1; });
+                    const total=Object.values(sc).reduce((a,b)=>a+b,0)||1;
+                    const c=echarts.init(el2); c.setOption({ series:[{ type:'gauge', startAngle:210, endAngle:-30, center:['50%','55%'], radius:'85%', min:0, max:100,
+                        progress:{show:true,width:16,itemStyle:{color:{type:'linear',x:0,y:0,x2:1,y2:0,colorStops:[{offset:0,color:'#16a34a'},{offset:.5,color:'#d97706'},{offset:1,color:'#dc2626'}]}}},
+                        axisLine:{lineStyle:{width:16,color:[[.4,'#16a34a'],[.7,'#d97706'],[1,'#dc2626']]}}, detail:{valueAnimation:true,formatter:'{value}%',fontSize:24,fontWeight:'bold'},
+                        data:[{value:Math.round((sc['RENTED']||0)/total*100),name:'出租率'}] }] });
                 }
             });
-            const dates = Object.keys(dailyRevenue).sort().slice(-14);
-            const values = dates.map(d => dailyRevenue[d]);
-
-            const dom = document.getElementById('chartRevenueTrend');
-            if (dom) {
-                const old = echarts.getInstanceByDom(dom); if (old) old.dispose();
-                const chart = echarts.init(dom);
-                chart.setOption({
-                    tooltip: { trigger: 'axis' },
-                    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-                    xAxis: { type: 'category', data: dates, axisLabel: { rotate: 30, fontSize: 10 } },
-                    yAxis: { type: 'value', name: '元' },
-                    series: [{
-                        type: 'line', data: values, smooth: true,
-                        lineStyle: { color: '#1890ff', width: 2 },
-                        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-                            colorStops: [{ offset: 0, color: 'rgba(24,144,255,0.3)' }, { offset: 1, color: 'rgba(24,144,255,0.02)' }] } },
-                        itemStyle: { color: '#1890ff' }
-                    }]
-                });
-            }
         }
-    } catch(e) {}
 
-    // 车辆出租率
-    try {
-        const res = await $get('/api/vehicle/statusSummary');
-        if (res.code === 200 && res.data) {
-            const statusCount = res.data.statusCount || {};
-            const total = Object.values(statusCount).reduce((a, b) => a + b, 0) || 1;
-            const rented = statusCount['RENTED'] || 0;
-            const rate = Math.round(rented / total * 100);
+        // Computed filters
+        const filteredVehicles = computed(() => { const s=vehicleSearch.value.toLowerCase(); return vehicles.value.filter(v=> !s||(v.brand+v.model+v.plateNumber).toLowerCase().includes(s)); });
+        const filteredCustomers = computed(() => { const s=customerSearch.value.toLowerCase(); return customers.value.filter(c=> !s||(c.name+c.phone).toLowerCase().includes(s)); });
+        const filteredOrders = computed(() => { const s=orderSearch.value.toLowerCase(); return orders.value.filter(o=> !s||(o.orderNo+o.customerName+o.vehiclePlate).toLowerCase().includes(s)); });
+        const filteredViolations = computed(() => { const s=violSearch.value.toLowerCase(); return violations.value.filter(v=> !s||(v.orderNo+v.customerName+v.vehiclePlate).toLowerCase().includes(s)); });
+        const filteredUsers = computed(() => { const s=userSearch.value.toLowerCase(); return usersList.value.filter(u=> !s||(u.username+u.realName+u.phone).toLowerCase().includes(s)); });
 
-            const dom = document.getElementById('chartUtilRate');
-            if (dom) {
-                const old = echarts.getInstanceByDom(dom); if (old) old.dispose();
-                const chart = echarts.init(dom);
-                chart.setOption({
-                    series: [{
-                        type: 'gauge',
-                        startAngle: 210, endAngle: -30,
-                        center: ['50%', '55%'],
-                        radius: '85%',
-                        min: 0, max: 100,
-                        progress: { show: true, width: 18, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-                            colorStops: [{ offset: 0, color: '#52c41a' }, { offset: 0.5, color: '#faad14' }, { offset: 1, color: '#f5222d' }] } } },
-                        axisLine: { lineStyle: { width: 18, color: [[0.4, '#52c41a'],[0.7, '#faad14'],[1, '#f5222d']] } },
-                        axisTick: { show: false },
-                        splitLine: { show: false },
-                        axisLabel: { show: false },
-                        detail: { valueAnimation: true, formatter: '{value}%', fontSize: 28, fontWeight: 'bold', offsetCenter: [0, '70%'] },
-                        data: [{ value: rate, name: '出租率' }]
-                    }]
-                });
-            }
-        }
-    } catch(e) {}
-}
+        const pageTitle = computed(() => ({ dashboard:'数据看板', vehicles:'车辆管理', customers:'客户管理', orders:'订单管理', violations:'违章管理', stats:'统计报表', users:'用户管理', config:'系统配置' })[page.value]||'');
 
-// ============================================================
-// 9. 用户管理
-// 时间维度切换
-function switchTimeDim(dim) {
-    ['Today','Month','Year'].forEach(d => {
-        const btn = document.getElementById('dim' + d);
-        if (btn) {
-            if (d === dim.charAt(0).toUpperCase() + dim.slice(1)) {
-                btn.className = 'btn btn-primary active';
-            } else {
-                btn.className = 'btn btn-outline';
-            }
-        }
-    });
-    toast('已切换至' + {today:'今日', month:'本月', year:'本年'}[dim] + '视图（数据加载中...）', 'success');
-    showPage('statistics');
-}
-
-// ============================================================
-const ROLE_MAP = { 'SUPER':'超级管理员','ADMIN':'管理员','NORMAL':'普通用户' };
-
-async function renderUsers() {
-    const res = await $get('/api/user/list');
-    const users = res.code === 200 ? res.data : [];
-    return `
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="showAddUser()"><i class="fas fa-user-plus"></i> 新增账号</button>
-            <input class="search-input" placeholder="🔍 搜索用户名/手机号..." oninput="filterTable(this)" data-table="userTable">
-        </div>
-        <div class="table-container">
-            <table><thead><tr>
-                <th>用户名</th><th>姓名</th><th>手机号</th><th>角色</th><th>状态</th><th>最后登录</th><th>操作</th>
-            </tr></thead>
-            <tbody id="userTable">
-                ${users.map(u => {
-                    const sCls = u.status === 1 ? 'available' : 'repair';
-                    return `<tr>
-                        <td><strong>${u.username||''}</strong></td>
-                        <td>${u.realName||''}</td>
-                        <td>${u.phone||''}</td>
-                        <td>${ROLE_MAP[u.role]||u.role}</td>
-                        <td><span class="status-badge ${sCls}">${u.status===1?'启用':'禁用'}</span></td>
-                        <td>${u.lastLoginTime||'-'}</td>
-                        <td><div class="table-actions">
-                            <button class="btn-sm btn-warning" onclick="showEditUser(${u.id})">编辑</button>
-                            <button class="btn-sm btn-outline" onclick="resetUserPassword(${u.id})">重置密码</button>
-                            <button class="btn-sm btn-primary" onclick="showUserLogs(${u.id}, '${u.username||''}', '${u.realName||''}')">日志</button>
-                            <button class="btn-sm btn-danger" onclick="deleteUser(${u.id})">删除</button>
-                        </div></td>
-                    </tr>`;
-                }).join('')}
-            </tbody></table>
-        </div>`;
-}
-
-async function showAddUser() {
-    openModal(`
-        <div class="modal-header"><h3>👤 新增账号</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="addUserForm">
-            <div class="form-row">
-                <div class="form-group"><label>用户名 <span class="required">*</span></label><input name="username" required></div>
-                <div class="form-group"><label>密码 <span class="required">*</span></label><input name="password" type="password" required></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>姓名 <span class="required">*</span></label><input name="realName" required></div>
-                <div class="form-group"><label>手机号</label><input name="phone"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>角色 <span class="required">*</span></label>
-                    <select name="role" required>
-                        <option value="NORMAL">普通用户</option><option value="ADMIN">管理员</option><option value="SUPER">超级管理员</option>
-                    </select></div>
-                <div class="form-group"><label>状态</label>
-                    <select name="status"><option value="1">启用</option><option value="0">禁用</option></select></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">确认新增</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('addUserForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const data = Object.fromEntries(fd.entries());
-        data.status = parseInt(data.status);
-        const r = await $post('/api/user/add', data);
-        if (r.code === 200) { closeModal(); toast('账号创建成功！'); showPage('users'); }
-        else { toast(r.msg || '创建失败', 'error'); }
-    });
-}
-
-async function showEditUser(id) {
-    const res = await $get('/api/user/' + id);
-    if (res.code !== 200) { toast('用户不存在', 'error'); return; }
-    const u = res.data;
-    openModal(`
-        <div class="modal-header"><h3>✏️ 编辑用户</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        <form id="editUserForm">
-            <div class="form-row">
-                <div class="form-group"><label>姓名</label><input name="realName" value="${u.realName||''}" required></div>
-                <div class="form-group"><label>手机号</label><input name="phone" value="${u.phone||''}"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>邮箱</label><input name="email" value="${u.email||''}"></div>
-                <div class="form-group"><label>角色</label>
-                    <select name="role">
-                        <option value="NORMAL" ${u.role==='NORMAL'?'selected':''}>普通用户</option>
-                        <option value="ADMIN" ${u.role==='ADMIN'?'selected':''}>管理员</option>
-                        <option value="SUPER" ${u.role==='SUPER'?'selected':''}>超级管理员</option>
-                    </select></div>
-            </div>
-            <div class="form-group"><label>状态</label>
-                <select name="status">
-                    <option value="1" ${u.status===1?'selected':''}>启用</option>
-                    <option value="0" ${u.status===0?'selected':''}>禁用</option>
-                </select></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">取消</button>
-                <button type="submit" class="btn btn-primary">保存修改</button>
-            </div>
-        </form>
-    `);
-    document.getElementById('editUserForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const data = Object.fromEntries(fd.entries());
-        data.status = parseInt(data.status);
-        const r = await $put('/api/user/edit/' + id, data);
-        if (r.code === 200) { closeModal(); toast('修改成功！'); showPage('users'); }
-        else { toast(r.msg || '修改失败', 'error'); }
-    });
-}
-
-async function resetUserPassword(id) {
-    if (!await showConfirm('重置密码', '系统将为该用户生成一个随机临时密码，确认重置？', '🔑', '确认重置', 'btn-warning')) return;
-    const r = await $post('/api/user/resetPassword/' + id);
-    if (r.code === 200) { toast(r.msg || '密码已重置'); }
-    else { toast(r.msg || '操作失败', 'error'); }
-}
-
-async function showUserLogs(id, username, realName) {
-    const res = await $get('/api/user/logs/' + id);
-    const logData = res.code === 200 ? res.data : null;
-    openModal(`
-        <div class="modal-header"><h3>📋 登录日志 - ${realName||username||''}</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-        ${logData ? `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div><strong>用户名</strong><br>${logData.username||'-'}</div>
-                <div><strong>用户ID</strong><br>${logData.userId||'-'}</div>
-                <div><strong>最后登录时间</strong><br>${logData.lastLoginTime||'暂无记录'}</div>
-                <div><strong>最后登录IP</strong><br>${logData.lastLoginIp||'暂无记录'}</div>
-            </div>
-        ` : '<p style="color:#8c8f9c;">暂无登录记录</p>'}
-        <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button></div>
-    `);
-}
-
-async function deleteUser(id) {
-    const res = await $get('/api/user/' + id);
-    if (res.code !== 200) { toast('用户不存在', 'error'); return; }
-    if (!await showConfirm('删除账号', `确定要删除账号「${res.data.username}」吗？此操作不可恢复！`, '🗑️', '确认删除', 'btn-danger')) return;
-    const r = await $del('/api/user/delete/' + id);
-    if (r.code === 200) { toast('账号已删除', 'error'); showPage('users'); }
-    else { toast(r.msg || '删除失败', 'error'); }
-}
-
-// ============================================================
-// 10. 系统配置
-// ============================================================
-async function renderConfig() {
-    let configs = {};
-    try {
-        const res = await $get('/api/config/map');
-        if (res.code === 200) configs = res.data || {};
-    } catch(e) {}
-
-    const maxDailyPrice = configs['maxDailyPrice'] || '1000';
-    const depositRatio = configs['depositRatio'] || '0.3';
-    const overtimeRate = configs['overtimeRate'] || '50';
-    const violationDeposit = configs['violationDeposit'] || '500';
-
-    // 车辆状态列表
-    let statusList = ['AVAILABLE', 'RENTED', 'REPAIR', 'OFFLINE'];
-    try {
-        const sr = await $get('/api/vehicle/statusSummary');
-        if (sr.code === 200 && sr.data && sr.data.statusCount) {
-            statusList = Object.keys(sr.data.statusCount);
-        }
-    } catch(e) {}
-
-    return `
-        <div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);max-width:800px;">
-            <h3 style="margin-bottom:20px;">⚙️ 系统参数配置</h3>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>日租金上限 (元) <span class="required">*</span></label>
-                    <input type="number" id="cfgMaxPrice" value="${maxDailyPrice}" style="width:200px;">
-                </div>
-                <div class="form-group">
-                    <label>押金比例</label>
-                    <input type="number" id="cfgDepositRatio" value="${depositRatio}" step="0.01" min="0" max="1" style="width:200px;">
-                    <span style="color:#8c8f9c;margin-left:8px;">(0~1)</span>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>超时费率 (元/小时)</label>
-                    <input type="number" id="cfgOvertimeRate" value="${overtimeRate}" style="width:200px;">
-                </div>
-                <div class="form-group">
-                    <label>违章保证金 (元)</label>
-                    <input type="number" id="cfgViolationDeposit" value="${violationDeposit}" style="width:200px;">
-                </div>
-            </div>
-
-            <h4 style="margin:20px 0 12px;">📌 车辆状态字典</h4>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;" id="statusTags">
-                ${statusList.map(s => `
-                    <span style="background:#f0f2f5;padding:4px 14px;border-radius:16px;display:inline-flex;align-items:center;gap:6px;">
-                        ${s}
-                        <i class="fas fa-times" style="cursor:pointer;color:#f5222d;font-size:11px;" onclick="alert('状态字典由系统自动维护')" title="自动维护，不可删除"></i>
-                    </span>
-                `).join('')}
-                <span style="color:#8c8f9c;font-size:12px;">（由车辆状态自动维护）</span>
-            </div>
-
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #f0f0f0;display:flex;gap:12px;">
-                <button class="btn btn-primary" onclick="saveSystemConfig()"><i class="fas fa-save"></i> 保存配置</button>
-                <button class="btn btn-outline" onclick="showToast('配置已重置为默认值', 'warning')"><i class="fas fa-undo"></i> 恢复默认</button>
-                <span style="margin-left:12px;color:#8c8f9c;font-size:13px;" id="cfgSaveTime"></span>
-            </div>
-        </div>`;
-}
-
-async function saveSystemConfig() {
-    const configs = {
-        maxDailyPrice: document.getElementById('cfgMaxPrice')?.value || '1000',
-        depositRatio: document.getElementById('cfgDepositRatio')?.value || '0.3',
-        overtimeRate: document.getElementById('cfgOvertimeRate')?.value || '50',
-        violationDeposit: document.getElementById('cfgViolationDeposit')?.value || '500',
-    };
-    const res = await $post('/api/config/saveBatch', configs);
-    if (res.code === 200) {
-        document.getElementById('cfgSaveTime').textContent = '✅ 已保存 ' + new Date().toLocaleString();
-        toast('配置保存成功！');
-    } else {
-        toast(res.msg || '保存失败', 'error');
+        return { user, page, toast, modal, viewMode, vehicles, customers, orders, violations, usersList, dash, cfg,
+            vehicleSearch, customerSearch, orderSearch, violSearch, userSearch,
+            pageTitle, filteredVehicles, filteredCustomers, filteredOrders, filteredViolations, filteredUsers,
+            statusClass, statusLabel, orderStatusClass, orderStatusLabel, roleLabel, fmtTime,
+            openVehicleModal, openCustomerModal, openUserModal, onModalDone,
+            setRepair, completeRepair, exportVehicles,
+            showAddPoints, toggleBlacklist,
+            openOrderModal, confirmPickup, showReturnModal, cancelOrder, showMarkAbnormal,
+            openViolationModal, resolveViolation,
+            resetUserPwd, showUserLog, deleteUser,
+            loadConfig, saveConfig };
     }
-}
-
-// ============================================================
-// 图片上传预览
-function previewUploadImages(input) {
-    const container = document.getElementById('imagePreview');
-    if (!container) return;
-    container.innerHTML = '';
-    Array.from(input.files).forEach((file, idx) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const div = document.createElement('div');
-            div.style.cssText = 'position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:2px solid #e8e8e8;';
-            div.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">' +
-                '<span style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;" onclick="this.parentElement.remove()">×</span>';
-            container.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
-// 获取车辆首图
-function getVehicleImage(imageUrls) {
-    if (!imageUrls) return '🚗';
-    const urls = imageUrls.split(',').filter(u => u.trim());
-    if (urls.length === 0) return '🚗';
-    return urls[0].trim();
-}
-
-// 11. 通用表格过滤
-// ============================================================
-function filterTable(input) {
-    const tableId = input.dataset.table;
-    const colIdx = input.dataset.col ? parseInt(input.dataset.col) : null;
-    const keyword = (input.value || '').toLowerCase();
-    const rows = document.querySelectorAll(`#${tableId} tr`);
-
-    rows.forEach(row => {
-        if (colIdx !== null && keyword) {
-            // 按特定列筛选
-            const cell = row.querySelectorAll('td')[colIdx];
-            const text = (cell?.textContent || '').toLowerCase();
-            row.style.display = text.includes(keyword) ? '' : 'none';
-        } else if (keyword) {
-            // 全字段搜索
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(keyword) ? '' : 'none';
-        } else {
-            row.style.display = '';
-        }
-    });
-}
-
-// ============================================================
-// 12. 初始化
-// ============================================================
-showPage('dashboard');
-console.log('🚗 爱租车汽车租赁管理系统 v3.0 已启动（API模式）');
+}).mount('#app');
 </script>
 </body>
 </html>

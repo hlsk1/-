@@ -83,6 +83,33 @@
 </div>
 <div class="container" id="mainContent"></div>
 <div class="toast" id="toast"></div>
+<div class="modal-overlay" id="orderOverlay">
+    <div class="modal" style="max-width:600px;">
+        <div class="modal-header"><h3>📋 租车下单</h3><button class="modal-close" onclick="closeOrderModal()">&times;</button></div>
+        <form id="orderForm">
+            <div class="form-row">
+                <div class="form-group"><label>车辆</label><input type="text" id="ordVehicle" readonly style="background:var(--gray-50);"></div>
+                <div class="form-group"><label>日租金</label><input type="text" id="ordPrice" readonly style="background:var(--gray-50);"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>取车时间 <span class="required">*</span></label><input type="datetime-local" id="ordPickup" required></div>
+                <div class="form-group"><label>还车时间 <span class="required">*</span></label><input type="datetime-local" id="ordReturn" required></div>
+            </div>
+            <div id="ordSummary" style="background:var(--gray-50);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;display:none;">
+                <div class="flex-between" style="font-size:0.875rem;margin-bottom:0.5rem;"><span>租赁天数</span><strong id="ordDays">0 天</strong></div>
+                <div class="flex-between" style="font-size:0.875rem;margin-bottom:0.5rem;"><span>租金 (日租×天数)</span><strong id="ordRent">¥0</strong></div>
+                <div class="flex-between" style="font-size:0.875rem;"><span>押金 (30%)</span><strong id="ordDeposit">¥0</strong></div>
+                <div class="flex-between" style="font-size:1rem;font-weight:700;border-top:1px solid var(--gray-200);padding-top:0.5rem;margin-top:0.5rem;"><span>合计</span><strong id="ordTotal" style="color:var(--danger);">¥0</strong></div>
+            </div>
+            <div class="form-group"><label>备注</label><textarea id="ordRemark" rows="2" placeholder="如有特殊需求请备注（选填）"></textarea></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeOrderModal()">取消</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check-circle"></i> 提交订单</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
 <div class="modal-overlay" id="confirmOverlay">
     <div class="modal" style="max-width:400px;text-align:center;">
         <div style="font-size:2.5rem;margin-bottom:0.5rem;" id="confirmIcon"></div>
@@ -113,6 +140,9 @@ function showConfirm(title, msg, icon, okText, okClass) {
     document.getElementById('confirmOverlay').classList.add('active');
     return new Promise(r => { _confirmResolve = r; });
 }
+function openModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
 function resolveConfirm(r) { document.getElementById('confirmOverlay').classList.remove('active'); if(_confirmResolve){_confirmResolve(!!r);_confirmResolve=null;} }
 document.getElementById('confirmOverlay').addEventListener('click', function(e) { if(e.target===this) resolveConfirm(false); });
 async function logout(){
@@ -127,10 +157,30 @@ function showSection(s){
     if(s==='home') renderHome(c); else if(s==='orders') renderOrders(c); else if(s==='vehicles') renderVehicles(c); else if(s==='violations') renderViolations(c); else if(s==='profile') renderProfile(c);
 }
 async function $get(u){ const r=await fetch(API+u); return r.json(); }
+async function $put(u,b){ const r=await fetch(API+u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); }
+
+// 获取客户信息（按手机号匹配）
+var _customerName = '';
+async function loadCustomerName(){
+    if (_customerName) return _customerName;
+    try {
+        var r = await $get('/api/customer/list?phone=' + (userPhone||USER.phone||''));
+        if (r.code===200 && r.data && r.data.length>0) {
+            _customerName = r.data[0].name || '';
+        }
+    } catch(e) {}
+    // 兜底：用USER.realName
+    if (!_customerName) _customerName = USER.realName || '';
+    return _customerName;
+}
+
 async function renderHome(c){
+    var custName = await loadCustomerName();
     let orders=[], viols=[], points=0;
-    try { const r=await $get('/api/order/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) orders=r.data; } catch{}
-    try { const r=await $get('/api/violation/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) viols=r.data; } catch{}
+    if (custName) {
+        try { const r=await $get('/api/order/list?customerName='+encodeURIComponent(custName)); if(r.code===200) orders=r.data; } catch{}
+        try { const r=await $get('/api/violation/list?customerName='+encodeURIComponent(custName)); if(r.code===200) viols=r.data; } catch{}
+    }
     try { const r=await $get('/api/customer/list?phone='+(userPhone||'')); if(r.code===200&&r.data&&r.data.length) points=r.data[0].points||0; } catch{}
     const pending = viols.filter(v=>v.status==='PENDING').length;
     c.innerHTML = `
@@ -153,54 +203,200 @@ async function renderHome(c){
 }
 async function renderOrders(c){
     c.innerHTML = '<p class="empty-state"><i class="fas fa-spinner fa-spin"></i>加载中...</p>';
-    let orders=[]; const m={PENDING:'待取车',PICKED_UP:'已取车',RETURNED:'已还车',CANCELLED:'已取消',COMPLETED:'已完成'}, cl={PENDING:'amber',PICKED_UP:'blue',RETURNED:'green',CANCELLED:'red',COMPLETED:'green'};
-    try { const r=await $get('/api/order/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) orders=r.data||[]; } catch{}
-    c.innerHTML = '<h2 class="section-title">📋 我的订单</h2>'+
-        (orders.length===0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>暂无订单记录</p></div>' :
-        '<div class="table-wrapper"><table><thead><tr><th>订单号</th><th>车辆</th><th>取车</th><th>还车</th><th>天数</th><th>金额</th><th>状态</th></tr></thead><tbody>'+
-        orders.map(o=>'<tr><td><strong>'+ (o.orderNo||'-') +'</strong></td><td>'+ (o.vehicleBrand||'') +' '+ (o.vehicleModel||'') +'</td><td>'+ (o.pickupTime||'-') +'</td><td>'+ (o.returnTime||'-') +'</td><td>'+ (o.rentDays||0) +'天</td><td>¥'+ (o.finalAmount||o.totalAmount||0) +'</td><td><span class="badge badge-'+ (cl[o.status]||'gray') +'">'+ (m[o.status]||o.status) +'</span></td></tr>').join('')+
-        '</tbody></table></div>');
+    var custName = await loadCustomerName();
+    let orders=[]; const sm={PENDING:'待取车',PICKED_UP:'已取车',RETURNED:'已还车',CANCELLED:'已取消',COMPLETED:'已完成'}, sc={PENDING:'amber',PICKED_UP:'blue',RETURNED:'green',CANCELLED:'red',COMPLETED:'green'};
+    if (custName) { try { const r=await $get('/api/order/list?customerName='+encodeURIComponent(custName)); if(r.code===200) orders=r.data||[]; } catch{} }
+
+    // 按时间倒序
+    orders.sort(function(a,b){ return (b.id||0) - (a.id||0); });
+
+    var activeCount = orders.filter(function(o){ return o.status==='PENDING'||o.status==='PICKED_UP'; }).length;
+
+    c.innerHTML = '<h2 class="section-title">📋 我的订单 <span class="badge badge-blue" style="vertical-align:middle;">进行中 '+activeCount+'</span> <span class="badge badge-gray" style="vertical-align:middle;">共 '+orders.length+'</span></h2>'+
+        (orders.length===0 ? '<div class="empty-state"><i class="fas fa-inbox"></i><p>暂无订单记录</p><p style="font-size:.8125rem;"><a href="#" onclick="showSection(\'vehicles\')">去选车租一辆 →</a></p></div>' :
+        '<div class="table-wrapper"><table><thead><tr><th>订单号</th><th>车辆</th><th>取车时间</th><th>还车时间</th><th>天数</th><th>押金</th><th>总金额</th><th>状态</th><th>操作</th></tr></thead><tbody>'+
+        orders.map(function(o){
+            var acts = '';
+            if (o.status === 'PENDING') {
+                acts = '<button class="btn btn-xs btn-danger" onclick="cancelMyOrder('+o.id+',\''+(o.orderNo||'')+'\')">取消订单</button>';
+            } else if (o.status === 'PICKED_UP') {
+                acts = '<button class="btn btn-xs btn-primary" onclick="showMyOrderDetail('+o.id+')">详情</button>';
+            } else if (o.status === 'COMPLETED') {
+                acts = '<button class="btn btn-xs btn-primary" onclick="showMyOrderDetail('+o.id+')">详情</button>'+
+                '<button class="btn btn-xs btn-accent" style="background:#d97706;color:#fff;" onclick="goReview('+o.id+',\''+(o.orderNo||'')+'\','+ (o.vehicleId||0) +',\''+(o.vehicleBrand||'')+'\',\''+(o.vehicleModel||'')+'\')">去评价</button>';
+            } else {
+                acts = '<button class="btn btn-xs btn-outline" onclick="showMyOrderDetail('+o.id+')">详情</button>';
+            }
+            return '<tr><td><strong>'+ (o.orderNo||'-') +'</strong></td><td>'+ (o.vehicleBrand||'') +' '+ (o.vehicleModel||'') +'<br><span style="font-size:.6875rem;color:var(--text-muted);">'+ (o.vehiclePlate||'') +'</span></td><td>'+ fmtTimeStr(o.pickupTime) +'</td><td>'+ fmtTimeStr(o.returnTime) +'</td><td>'+ (o.rentDays||0) +'天</td><td>¥'+ (o.depositAmount||0) +'</td><td style="font-weight:600;">¥'+ (o.finalAmount||o.totalAmount||0) +'</td><td><span class="badge badge-'+ (sc[o.status]||'gray') +'">'+ (sm[o.status]||o.status) +'</span></td><td>'+ acts +'</td></tr>';
+        }).join('')+'</tbody></table></div>');
 }
+
+function fmtTimeStr(t){ if(!t) return '-'; return t.replace('T',' ').substring(0,16); }
+
+async function cancelMyOrder(id, orderNo){
+    var ok = await showConfirm('取消订单', '确定要取消订单「'+orderNo+'」吗？取消后不可恢复。', '⚠️', '确认取消', 'btn-danger');
+    if (!ok) return;
+    try {
+        var r = await fetch(API+'/api/order/cancel/'+id+'?reason='+encodeURIComponent('客户主动取消'), { method:'POST' });
+        var d = await r.json();
+        if (d.code===200) { toast('订单已取消'); showSection('orders'); }
+        else { toast(d.msg||'操作失败','error'); }
+    } catch(e) { toast('网络错误','error'); }
+}
+
+async function showMyOrderDetail(id){
+    try {
+        var r = await $get('/api/order/detail/'+id);
+        if (r.code!==200) { toast('订单不存在','error'); return; }
+        var o = r.data;
+        var sm = {PENDING:'待取车',PICKED_UP:'已取车',RETURNED:'已还车',CANCELLED:'已取消',COMPLETED:'已完成'};
+        var sc = {PENDING:'amber',PICKED_UP:'blue',RETURNED:'green',CANCELLED:'red',COMPLETED:'green'};
+        openModal(
+            '<div class="modal-header"><h3>📋 订单详情 - '+ (o.orderNo||'') +'</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;font-size:.875rem;">'+
+            '<div><strong>客户</strong><br>'+ (o.customerName||'-') +'</div><div><strong>手机号</strong><br>'+ (o.customerPhone||'-') +'</div>'+
+            '<div><strong>车辆</strong><br>'+ (o.vehicleBrand||'') +' '+ (o.vehicleModel||'') +'</div><div><strong>车牌</strong><br>'+ (o.vehiclePlate||'-') +'</div>'+
+            '<div><strong>取车时间</strong><br>'+ fmtTimeStr(o.pickupTime) +'</div><div><strong>还车时间</strong><br>'+ fmtTimeStr(o.returnTime) +'</div>'+
+            '<div><strong>实际还车</strong><br>'+ fmtTimeStr(o.actualReturnTime) +'</div><div><strong>租赁天数</strong><br>'+ (o.rentDays||0) +'天</div>'+
+            '<div><strong>日租金</strong><br>¥'+ (o.dailyPrice||0) +'</div><div><strong>押金金额</strong><br>¥'+ (o.depositAmount||0) +'</div>'+
+            '<div><strong>总金额</strong><br>¥'+ (o.totalAmount||0) +'</div><div><strong>结算金额</strong><br><span style="font-size:1.125rem;font-weight:700;color:var(--danger);">¥'+ (o.finalAmount||o.totalAmount||0) +'</span></div>'+
+            '<div><strong>状态</strong><br><span class="badge badge-'+ (sc[o.status]||'gray') +'">'+ (sm[o.status]||o.status) +'</span></div>'+
+            (o.cancelReason ? '<div><strong>取消原因</strong><br>'+ o.cancelReason +'</div>' : '') +
+            (o.carCondition ? '<div><strong>车况描述</strong><br>'+ o.carCondition +'</div>' : '') +
+            (o.remark ? '<div><strong>备注</strong><br>'+ o.remark +'</div>' : '') +
+            '</div>'+
+            '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button></div>'
+        );
+    } catch(e) { toast('加载失败','error'); }
+}
+var _vehicleMap = {};
+var _orderVehicle = null;
+
+function goReview(orderId, orderNo, vehicleId, brand, model) {
+    fetch(API+'/api/review/check/'+orderId).then(r=>r.json()).then(d=>{
+        if(d.code===200&&d.data===true){ toast('该订单已评价过'); return; }
+        window.location.href = 'reviews.html?action=write&orderId='+orderId+'&orderNo='+encodeURIComponent(orderNo)+'&vehicleId='+vehicleId+'&brand='+encodeURIComponent(brand||'')+'&model='+encodeURIComponent(model||'');
+    }).catch(function(){ toast('网络错误','error'); });
+}
+
+function showOrderForm(vehicleId) {
+    var v = _vehicleMap[vehicleId];
+    if (!v) { toast('车辆信息丢失','error'); return; }
+    _orderVehicle = v;
+    document.getElementById('ordVehicle').value = (v.brand||'') + ' ' + (v.model||'') + ' · ' + (v.plateNumber||'');
+    document.getElementById('ordPrice').value = '¥' + (v.dailyPrice||0) + ' /日';
+    document.getElementById('ordPickup').value = '';
+    document.getElementById('ordReturn').value = '';
+    document.getElementById('ordRemark').value = '';
+    document.getElementById('ordSummary').style.display = 'none';
+    document.getElementById('orderOverlay').classList.add('active');
+}
+function closeOrderModal() { document.getElementById('orderOverlay').classList.remove('active'); }
+document.getElementById('orderOverlay').addEventListener('click', function(e){ if(e.target===this) closeOrderModal(); });
+
+function calcOrder() {
+    var p = document.getElementById('ordPickup').value, r = document.getElementById('ordReturn').value;
+    if (!p || !r) { document.getElementById('ordSummary').style.display = 'none'; return; }
+    var pickup = new Date(p), ret = new Date(r);
+    if (ret <= pickup) { document.getElementById('ordSummary').style.display = 'none'; return; }
+    var days = Math.max(1, Math.ceil((ret - pickup) / (1000*60*60*24)));
+    var daily = _orderVehicle.dailyPrice||0, rent = daily * days, deposit = Math.round(rent * 0.3);
+    document.getElementById('ordDays').textContent = days + ' 天';
+    document.getElementById('ordRent').textContent = '¥' + rent;
+    document.getElementById('ordDeposit').textContent = '¥' + deposit;
+    document.getElementById('ordTotal').textContent = '¥' + (rent + deposit);
+    document.getElementById('ordSummary').style.display = 'block';
+}
+document.getElementById('ordPickup').addEventListener('change', calcOrder);
+document.getElementById('ordReturn').addEventListener('change', calcOrder);
+
+document.getElementById('orderForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var pickup = document.getElementById('ordPickup').value, ret = document.getElementById('ordReturn').value;
+    if (!pickup || !ret) { toast('请选择取车和还车时间','error'); return; }
+    if (new Date(ret) <= new Date(pickup)) { toast('还车时间必须晚于取车时间','error'); return; }
+    var remark = document.getElementById('ordRemark').value.trim();
+
+    // 通过手机号查询客户ID
+    var customerId = null;
+    try {
+        var cr = await fetch(API+'/api/customer/list?phone='+(userPhone||USER.phone||''));
+        var cd = await cr.json();
+        if (cd.code===200 && cd.data && cd.data.length>0) customerId = cd.data[0].id;
+    } catch(e) {}
+    if (!customerId) { toast('找不到您的客户档案，请联系管理员','error'); return; }
+
+    try {
+        var res = await fetch(API+'/api/order/create', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ customerId: customerId, vehicleId: _orderVehicle.id,
+                pickupTime: pickup+':00', returnTime: ret+':00', remark: remark }) });
+        var d = await res.json();
+        if (d.code === 200) { closeOrderModal(); toast('订单创建成功！','success'); showSection('orders'); }
+        else { toast(d.msg||'下单失败','error'); }
+    } catch { toast('网络错误','error'); }
+});
+
 async function renderVehicles(c){
     c.innerHTML = '<p class="empty-state"><i class="fas fa-spinner fa-spin"></i>加载中...</p>';
-    let vehicles=[]; const sm={AVAILABLE:'可用',RENTED:'已租',REPAIR:'维修中',OFFLINE:'下架'};
-    try { const r=await $get('/api/vehicle/list'); if(r.code===200) vehicles=(r.data||[]).filter(v=>v.status==='AVAILABLE'); } catch{}
+    var vehicles=[];
+    try { var r=await $get('/api/vehicle/list'); if(r.code===200) vehicles=(r.data||[]).filter(function(v){return v.status==='AVAILABLE';}); } catch{}
+    vehicles.forEach(function(v){ _vehicleMap[v.id] = v; });
     c.innerHTML = '<h2 class="section-title">🚗 可租车辆 <span class="badge badge-green" style="vertical-align:middle;">'+vehicles.length+' 辆</span></h2>'+
-        '<div class="vehicle-grid">'+vehicles.map(v=>{
-            const img=v.imageUrls?v.imageUrls.split(',')[0].trim():null;
-            const hasImg=img&&(img.startsWith('/uploads/')||img.startsWith('http'));
+        '<p style="color:var(--gray-400);font-size:0.875rem;margin-bottom:1rem;">点击「立即租用」选择心仪的座驾开始下单</p>'+
+        '<div class="vehicle-grid">'+vehicles.map(function(v){
+            var img=v.imageUrls?v.imageUrls.split(',')[0].trim():null;
+            var hasImg=img&&(img.startsWith('/uploads/')||img.startsWith('http'));
             return '<div class="v-card"><div class="v-img" style="'+ (hasImg?'background-image:url('+img+');background-size:cover;':'') +'">'+(hasImg?'':'🚗')+'</div>'+
             '<div class="v-body"><div class="v-name">'+(v.brand||'')+' '+(v.model||'')+'</div><div class="v-meta">'+(v.plateNumber||'')+' · '+(v.color||'')+' · '+(v.seatCount||0)+'座</div>'+
-            '<div class="v-price">¥'+(v.dailyPrice||0)+'<small>/日</small></div></div></div>';
+            '<div class="v-price" style="display:flex;justify-content:space-between;align-items:center;">¥'+(v.dailyPrice||0)+'<small>/日</small><button class="btn btn-accent btn-sm" onclick="showOrderForm('+v.id+')">立即租用</button></div></div></div>';
         }).join('')+'</div>'+
         (vehicles.length===0?'<div class="empty-state"><i class="fas fa-car-side"></i><p>暂无可用车辆</p></div>':'');
 }
 async function renderViolations(c){
     c.innerHTML = '<p class="empty-state"><i class="fas fa-spinner fa-spin"></i>加载中...</p>';
+    var custName = await loadCustomerName();
     let viols=[];
-    try { const r=await $get('/api/violation/list?customerName='+encodeURIComponent(USER.realName||'')); if(r.code===200) viols=r.data||[]; } catch{}
+    if (custName) {
+        try { const r=await $get('/api/violation/list?customerName='+encodeURIComponent(custName)); if(r.code===200) viols=r.data||[]; } catch{}
+    }
     c.innerHTML = '<h2 class="section-title">⚠️ 违章记录</h2>'+
         (viols.length===0 ? '<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--success);"></i><p>没有违章记录 🎉</p></div>' :
         '<div class="table-wrapper"><table><thead><tr><th>订单号</th><th>车牌</th><th>时间</th><th>地点</th><th>扣分</th><th>罚款</th><th>状态</th></tr></thead><tbody>'+
         viols.map(v=>'<tr><td>'+ (v.orderNo||'-') +'</td><td>'+ (v.vehiclePlate||'-') +'</td><td>'+ (v.violationTime||'-') +'</td><td>'+ (v.location||'-') +'</td><td style="color:var(--danger);font-weight:600;">'+ (v.points||0) +'分</td><td style="color:var(--danger);">¥'+ (v.fineAmount||0) +'</td><td><span class="badge badge-'+(v.status==='RESOLVED'?'green':'amber')+'">'+(v.status==='RESOLVED'?'已处理':'待处理')+'</span></td></tr>').join('')+
         '</tbody></table></div>');
 }
+var _profileCustomer = null;
 async function renderProfile(c){
-    let customer=null;
-    try { const r=await $get('/api/customer/list?phone='+(userPhone||'')); if(r.code===200&&r.data&&r.data.length) customer=r.data[0]; } catch{}
+    try { const r=await $get('/api/customer/list?phone='+(userPhone||'')); if(r.code===200&&r.data&&r.data.length) _profileCustomer=r.data[0]; } catch{}
+    var cust = _profileCustomer;
+    var editForm = cust ? `
+        <form id="profileEditForm" style="display:grid;gap:0.75rem;font-size:0.875rem;">
+            <div class="form-group"><label class="form-label">姓名</label><input class="form-input" name="name" value="${cust.name||''}" required></div>
+            <div class="form-group"><label class="form-label">手机号</label><input class="form-input" name="phone" value="${cust.phone||''}" required></div>
+            <div class="form-group"><label class="form-label">驾驶证号</label><input class="form-input" name="license" value="${cust.license||''}"></div>
+            <div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" name="remark">${cust.remark||''}</textarea></div>
+            <div style="display:flex;gap:.5rem;"><button type="submit" class="btn btn-primary btn-sm">保存修改</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="showSection('profile')">取消</button></div>
+        </form>` : '<p class="text-muted">暂无客户档案</p>';
     c.innerHTML = '<h2 class="section-title">👤 个人信息</h2>'+
         '<div class="grid-2" style="max-width:800px;">'+
         '<div class="card"><h3 style="margin-bottom:1rem;">🔐 账号信息</h3><div style="display:grid;gap:0.75rem;font-size:0.875rem;">'+
         '<div><span class="text-muted">用户名</span><br><strong>'+ (USER.username||'-') +'</strong></div>'+
         '<div><span class="text-muted">角色</span><br><span class="badge badge-blue">注册客户</span></div>'+
         '<div><span class="text-muted">最后登录</span><br>'+ (USER.lastLoginTime||'暂无') +'</div>'+
-        '<div><span class="text-muted">登录IP</span><br>'+ (USER.lastLoginIp||'暂无') +'</div></div></div>'+
-        '<div class="card"><h3 style="margin-bottom:1rem;">🪪 客户档案</h3>'+(customer?'<div style="display:grid;gap:0.75rem;font-size:0.875rem;">'+
-        '<div><span class="text-muted">姓名</span><br><strong>'+ (customer.name||'-') +'</strong></div>'+
-        '<div><span class="text-muted">手机号</span><br>'+ (customer.phone||'-') +'</div>'+
-        '<div><span class="text-muted">积分</span><br><strong style="color:var(--primary);">'+ (customer.points||0) +'</strong></div>'+
-        '<div><span class="text-muted">状态</span><br><span class="badge '+(customer.status==='BLACKLIST'?'badge-red':'badge-green')+'">'+(customer.status==='BLACKLIST'?'黑名单':'正常')+'</span></div>'+
-        '</div>':'<p class="text-muted">暂无客户档案</p>')+'</div></div>';
+        '<div><span class="text-muted">登录IP</span><br>'+ (USER.lastLoginIp||'暂无') +'</div>'+
+        '<a href="forgot-password.html" class="btn btn-outline btn-sm" style="margin-top:.5rem;">修改密码</a></div></div>'+
+        '<div class="card"><h3 style="margin-bottom:1rem;">🪪 编辑档案</h3>'+editForm+'</div></div>';
+    if (cust) {
+        document.getElementById('profileEditForm').addEventListener('submit', async function(e){
+            e.preventDefault();
+            var fd = new FormData(this);
+            var data = Object.fromEntries(fd.entries());
+            var r = await $put('/api/customer/edit/'+cust.id, data);
+            if (r.code===200) { toast('信息已更新'); showSection('profile'); }
+            else { toast(r.msg||'更新失败','error'); }
+        });
+    }
 }
 </script>
 </body>

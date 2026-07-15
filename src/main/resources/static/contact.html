@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>联系我们 - 爱租车</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/business.css">
+    <style>.contact-card{border-left:3px solid var(--accent);padding-left:1rem}.map-placeholder{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);height:280px;display:flex;align-items:center;justify-content:center;color:var(--muted)}</style>
+</head>
+<body>
+<header class="navbar">
+    <a href="home.html" class="brand"><span class="dot"></span>爱租车</a>
+    <nav>
+        <a href="home.html">首页</a><a href="home.html#services">服务</a><a href="home.html#fleet">车型</a>
+        <a href="about.html">关于</a><a href="contact.html">联系</a>
+        <a href="login.html" class="btn-sm btn-outline">登录</a><a href="register.html" class="btn-sm btn-filled">注册</a>
+    </nav>
+</header>
+
+<section class="page-hero"><div class="container">
+    <div class="section-label">Contact Us</div>
+    <h1>联系我们</h1><p>期待与您的每一次交流，我们将竭诚为您服务</p>
+</div></section>
+
+<section class="section"><div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;">
+        <div>
+            <div class="section-label">Get In Touch</div>
+            <h2 style="margin-bottom:1.5rem;">发送消息</h2>
+            <form id="contactForm">
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">姓名</label><input class="form-input" type="text" required placeholder="您的姓名"></div>
+                    <div class="form-group"><label class="form-label">手机号</label><input class="form-input" type="tel" required placeholder="您的手机号"></div>
+                </div>
+                <div class="form-group"><label class="form-label">主题</label><input class="form-input" type="text" placeholder="咨询主题"></div>
+                <div class="form-group"><label class="form-label">留言内容</label><textarea class="form-textarea" placeholder="请描述您的需求或问题..."></textarea></div>
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">发送留言</button>
+            </form>
+        </div>
+        <div>
+            <div class="section-label">Contact Info</div>
+            <h2 style="margin-bottom:1.5rem;">联系方式</h2>
+            <div style="display:grid;gap:1.25rem;">
+                <div class="card contact-card">
+                    <div style="display:flex;align-items:center;gap:.75rem;"><div style="width:40px;height:40px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);"><i class="fas fa-phone"></i></div><div><h4 style="font-size:.9375rem;">电话</h4><p class="text-sm text-muted">400-888-6688</p></div></div>
+                </div>
+                <div class="card contact-card">
+                    <div style="display:flex;align-items:center;gap:.75rem;"><div style="width:40px;height:40px;background:var(--accent-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--accent);"><i class="fas fa-envelope"></i></div><div><h4 style="font-size:.9375rem;">邮箱</h4><p class="text-sm text-muted">service@aizuche.com</p></div></div>
+                </div>
+                <div class="card contact-card">
+                    <div style="display:flex;align-items:center;gap:.75rem;"><div style="width:40px;height:40px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--success);"><i class="fas fa-map-marker-alt"></i></div><div><h4 style="font-size:.9375rem;">地址</h4><p class="text-sm text-muted">广东省广州市天河区体育西路168号</p></div></div>
+                </div>
+                <div class="card contact-card">
+                    <div style="display:flex;align-items:center;gap:.75rem;"><div style="width:40px;height:40px;background:#f5f3ff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#7c3aed;"><i class="fas fa-clock"></i></div><div><h4 style="font-size:.9375rem;">营业时间</h4><p class="text-sm text-muted">周一至周日 8:00 - 22:00</p></div></div>
+                </div>
+            </div>
+            <div class="map-placeholder" style="margin-top:1.5rem;">
+                <div style="text-align:center;"><i class="fas fa-map-pin" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>广州市天河区体育西路168号</div>
+            </div>
+        </div>
+    </div>
+</div></section>
+
+<section class="section" style="background:var(--surface);"><div class="container" style="text-align:center;">
+    <div class="section-label">FAQ</div><h2 style="margin-bottom:2rem;">常见问题</h2>
+    <div style="max-width:700px;margin:0 auto;display:grid;gap:1rem;text-align:left;">
+        <details class="card" style="cursor:pointer;"><summary style="font-weight:600;font-size:.9375rem;">租车需要什么证件？</summary><p class="text-sm text-muted" style="margin-top:.5rem;">需要本人有效身份证和驾驶证原件，部分车型可能需要信用卡预授权。</p></details>
+        <details class="card" style="cursor:pointer;"><summary style="font-weight:600;font-size:.9375rem;">可以异地还车吗？</summary><p class="text-sm text-muted" style="margin-top:.5rem;">目前支持广州市内任意门店还车，异地还车请提前联系客服确认。</p></details>
+        <details class="card" style="cursor:pointer;"><summary style="font-weight:600;font-size:.9375rem;">押金什么时候退还？</summary><p class="text-sm text-muted" style="margin-top:.5rem;">还车验车无误后，押金将在1-3个工作日内原路退还。</p></details>
+        <details class="card" style="cursor:pointer;"><summary style="font-weight:600;font-size:.9375rem;">可以续租吗？</summary><p class="text-sm text-muted" style="margin-top:.5rem;">可以。在租期到期前联系客服或通过系统申请续租即可。</p></details>
+    </div>
+</div></section>
+
+<footer class="footer"><div class="container"><div class="footer-grid">
+    <div><div style="font-size:1.125rem;font-weight:800;color:#fff;margin-bottom:.5rem;"><span style="color:var(--accent);">●</span> 爱租车</div><p>专业汽车租赁服务平台</p></div>
+    <div><h4>快速链接</h4><a href="home.html">首页</a><a href="about.html">关于我们</a><a href="contact.html">联系我们</a></div>
+    <div><h4>服务支持</h4><a href="#">租车须知</a><a href="#">保险说明</a><a href="#">违章处理</a></div>
+    <div><h4>联系方式</h4><a>400-888-6688</a><a>service@aizuche.com</a><a>广州市天河区</a></div>
+</div><div class="footer-bottom">© 2026 爱租车汽车租赁服务平台</div></div></footer>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit',function(e){e.preventDefault();alert('感谢您的留言！我们会尽快回复。');this.reset();});
+</script>
+</body>
+</html>

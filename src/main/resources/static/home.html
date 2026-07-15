@@ -23,11 +23,18 @@
         .navbar .links .btn-accent { padding: 0.5rem 1.25rem; border-radius: 100px; font-weight: 600; }
 
         .hero {
-            min-height: 100vh; background: linear-gradient(135deg, var(--dark) 0%, #1e3a5f 100%);
-            display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+            background: var(--dark);
         }
-        .hero::before { content: ''; position: absolute; width: 800px; height: 800px; background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 60%); top: -200px; right: -200px; }
-        .hero .content { text-align: center; color: #fff; position: relative; z-index: 1; max-width: 700px; padding: 2rem; }
+        .hero-bg-slider { position: absolute; inset: 0; z-index: 0; }
+        .hero-bg-slide {
+            position: absolute; inset: 0; background-size: cover; background-position: center;
+            opacity: 0; transition: opacity 1.5s ease-in-out;
+        }
+        .hero-bg-slide.active { opacity: 0.6; }
+        .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(15,23,42,0.45) 0%, rgba(30,58,95,0.35) 100%); z-index: 1; }
+        .hero::before { content: ''; position: absolute; width: 800px; height: 800px; background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 60%); top: -200px; right: -200px; z-index: 2; }
+        .hero .content { text-align: center; color: #fff; position: relative; z-index: 3; max-width: 700px; padding: 2rem; }
         .hero .content .badge { display: inline-block; padding: 0.375rem 1.25rem; border-radius: 100px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); color: var(--accent-light); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 1.5rem; }
         .hero .content h1 { font-size: 3.5rem; font-weight: 900; letter-spacing: 0.08em; margin-bottom: 1rem; line-height: 1.2; }
         .hero .content h1 span { background: linear-gradient(135deg, var(--accent-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -98,9 +105,11 @@
 </head>
 <body>
 
-<nav class="navbar" id="navbar"><div class="brand"><i class="fas fa-car"></i>爱租车</div><div class="links"><a href="#home">首页</a><a href="#services">服务</a><a href="#fleet">车型</a><a href="#process">流程</a><a href="#contact">联系</a><a href="login.html" class="btn-outline-light">登录</a><a href="register.html" class="btn btn-accent btn-sm">免费注册</a></div></nav>
+<nav class="navbar" id="navbar"><div class="brand"><i class="fas fa-car"></i>爱租车</div><div class="links"><a href="#home">首页</a><a href="#services">服务</a><a href="#fleet">车型</a><a href="#process">流程</a><a href="about.html">关于</a><a href="contact.html">联系</a><a href="login.html" class="btn-outline-light">登录</a><a href="register.html" class="btn btn-accent btn-sm">免费注册</a></div></nav>
 
-<section class="hero" id="home"><div class="content">
+<section class="hero" id="home">
+    <div class="hero-bg-slider" id="heroSlider"></div>
+    <div class="content">
     <div class="badge">🚗 专业汽车租赁 · 值得信赖</div>
     <h1>爱<span>租</span>车</h1>
     <p class="sub">品质座驾 · 灵活租期 · 无忧出行</p>
@@ -155,15 +164,141 @@
 </footer>
 
 <script>
+// ===== Hero 背景轮播 =====
+var HERO_IMAGES = [
+  '上汽通用五菱 星光730新能源_15.jpg','保时捷 保时捷911_8.jpg','方程豹 钛7_13.jpg',
+  '比亚迪 大唐_14.jpg','特斯拉中国 Model Y_12.jpg','长城汽车 坦克300_11.jpg',
+  '零跑汽车 零跑A10_10.jpg','广汽丰田 凯美瑞_4.jpg','吉利汽车 星愿_2.jpg',
+  '广汽本田 奥德赛_16.jpg','奔驰(进口) 奔驰S级_6.jpg','广汽丰田 赛那SIENNA_7.jpg'
+];
+(function initHeroSlider(){
+  var slider = document.getElementById('heroSlider');
+  HERO_IMAGES.forEach(function(f, i){
+    var div = document.createElement('div');
+    div.className = 'hero-bg-slide' + (i === 0 ? ' active' : '');
+    div.style.backgroundImage = 'url(/CarImages/' + encodeURI(f).replace(/\(/g,'%28').replace(/\)/g,'%29') + ')';
+    slider.appendChild(div);
+  });
+  var cur = 0, slides = slider.querySelectorAll('.hero-bg-slide');
+  setInterval(function(){
+    slides[cur].classList.remove('active');
+    cur = (cur + 1) % slides.length;
+    slides[cur].classList.add('active');
+  }, 4000);
+})();
+
 window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>50));
 document.querySelectorAll('a[href^="#"]').forEach(l=>l.addEventListener('click',function(e){const t=document.querySelector(this.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}}));
+
+// ===== CarImages 完整文件清单 =====
+var CAR_IMAGES = [
+  '上汽通用五菱 星光730新能源_15.jpg','保时捷 保时捷911_8.jpg','吉利汽车 星愿_2.jpg',
+  '奔驰(进口) 奔驰S级_6.jpg','广汽丰田 凯美瑞_4.jpg','广汽丰田 赛那SIENNA_17.jpg',
+  '广汽丰田 赛那SIENNA_7.jpg','广汽本田 奥德赛_16.jpg','方程豹 钛7_13.jpg',
+  '比亚迪 大唐_14.jpg','比亚迪 大唐_9.jpg','特斯拉中国 Model Y_12.jpg',
+  '长城汽车 坦克300_11.jpg','零跑汽车 零跑A10_10.jpg',
+  '超跑CLUB第313季：限量打造800台 Aventador_38.jpg','超跑CLUB第314季：如此强悍的敞篷跑车 法拉利812_37.jpg',
+  '超跑CLUB第315季：赛道上的狠角色 奥迪R8_36.jpg','超跑CLUB第316季：历久恒新 保时捷911_35.jpg',
+  '超跑CLUB第317季：尽显锐利锋芒 宝马i8_34.jpg','超跑CLUB第318季：赛车之魂蓄势待发 宝马M8_33.jpg',
+  '超跑CLUB第319季：独特的风格和气质 Roma_32.jpg','超跑CLUB第320季：如利刃般刺破空气 Gemera_31.jpg',
+  '超跑CLUB第321季：超凡性能与至尊奢华 AMG GT_30.jpg','超跑CLUB第322季：令人臣服的澎湃动力 RS7_29.jpg',
+  '超跑CLUB第323季：匠心设计 欧陆GT_28.jpg','超跑CLUB第324季：驾驶典范 阿斯顿·马丁DB11_27.jpg',
+  '超跑CLUB第325季：性能猛兽 科尔维特C8_26.jpg','超跑CLUB第326季：陆地飞行器 Lotus Evija_25.jpg',
+  '超跑CLUB第327季：大成之作 阿斯顿·马丁DBS_24.jpg',
+  '超跑CLUB第328季：精益求精 保时捷911_23.jpg','超跑CLUB第329季：动感而优雅 法拉利Portofino_22.jpg',
+  '超跑CLUB第330季：开启电动化篇章 法拉利296GTB_21.jpg','超跑CLUB第331季：创势而行大步奔驰 奔驰AMGGT_20.jpg',
+  '超跑CLUB第327季：开启新纪元 迈凯伦Artura_19.jpg'
+];
+
+// 三级智能匹配：精确→品牌→车型→单字→随机
+function findCarImage(brand, model) {
+  if (!brand && !model) return null;
+  var b = (brand||'').toLowerCase().replace(/[（(].*?[)）]/g,'').replace(/\s+/g,'');
+  var m = (model||'').toLowerCase().replace(/[（(].*?[)）]/g,'').replace(/\s+/g,'');
+  var files = CAR_IMAGES.map(function(f){ return {orig:f, low:f.toLowerCase().replace(/[（(].*?[)）]/g,'').replace(/\s+/g,'')}; });
+  var best;
+  // L1: 精确匹配（文件名同时含品牌+车型）
+  for (var i = 0; i < files.length; i++) {
+    if (b && m && files[i].low.indexOf(b) >= 0 && files[i].low.indexOf(m) >= 0) {
+      best = files[i]; break;
+    }
+  }
+  // L2: 车型匹配
+  if (!best) {
+    for (var i = 0; i < files.length; i++) {
+      if (m && files[i].low.indexOf(m) >= 0) { best = files[i]; break; }
+    }
+  }
+  // L3: 品牌匹配
+  if (!best) {
+    for (var i = 0; i < files.length; i++) {
+      if (b && files[i].low.indexOf(b) >= 0) { best = files[i]; break; }
+    }
+  }
+  // L4: 单字匹配
+  if (!best && b) {
+    for (var i = 0; i < files.length; i++) {
+      for (var j = 0; j < b.length; j++) {
+        if (b[j] !== ' ' && files[i].low.indexOf(b[j]) >= 0) { best = files[i]; break; }
+      }
+      if (best) break;
+    }
+  }
+  // L5: 随机选一张超跑图
+  if (!best) {
+    var supercars = files.filter(function(f){ return f.low.indexOf('超跑club') >= 0; });
+    if (supercars.length > 0) best = supercars[Math.floor(Math.random() * supercars.length)];
+  }
+  // encodeURI保留/但不过滤括号，手动补编码括号
+  return best ? '/CarImages/' + encodeURI(best.orig).replace(/\(/g,'%28').replace(/\)/g,'%29') : null;
+}
+
+// 渲染车辆卡片
+function renderVehicleCard(v) {
+  var bgStyle = '';
+  // 优先用上传图片
+  var uploadedImg = v.imageUrls ? v.imageUrls.split(',')[0].trim() : null;
+  if (uploadedImg && (uploadedImg.startsWith('/uploads/') || uploadedImg.startsWith('http'))) {
+    bgStyle = 'background-image:url(' + uploadedImg + ');background-size:cover;';
+  } else {
+    // 其次用CarImages匹配
+    var carImg = findCarImage(v.brand, v.model);
+    if (carImg) bgStyle = 'background-image:url(' + carImg + ');background-size:cover;';
+  }
+  return '<div class="v-card">' +
+    '<div class="v-img" style="' + bgStyle + '">' + (bgStyle ? '' : '🚗') + '</div>' +
+    '<div class="v-body">' +
+    '<div class="v-name">' + (v.brand||'') + '</div>' +
+    '<div class="v-model">' + (v.model||'') + '</div>' +
+    '<div class="v-meta">' +
+    '<span><i class="fas fa-palette"></i> ' + (v.color||'-') + '</span>' +
+    '<span><i class="fas fa-user"></i> ' + (v.seatCount||0) + '座</span>' +
+    '<span>' + (v.plateNumber||'-') + '</span>' +
+    '</div>' +
+    '<div class="v-footer"><div class="v-price">¥' + (v.dailyPrice||0) + '<small>/日</small></div></div>' +
+    '</div></div>';
+}
+
 (async function(){
-    const c=document.getElementById('vehicleShowcase'),icons=['🚗','🚙','🏎️','🚐','🚘','🛻'];
-    try{const r=await fetch('/api/vehicle/list'),d=await r.json();if(d.code===200&&d.data){const v=d.data.filter(v=>v.status==='AVAILABLE').slice(0,6);if(v.length>0){c.innerHTML=v.map((v,i)=>{
-        const img=v.imageUrls?v.imageUrls.split(',')[0].trim():null,has=img&&(img.startsWith('/uploads/')||img.startsWith('http'));
-        return '<div class="v-card"><div class="v-img" style="'+(has?'background-image:url('+img+');background-size:cover;':'')+'">'+(has?'':icons[i%6])+'</div><div class="v-body"><div class="v-name">'+(v.brand||'')+'</div><div class="v-model">'+(v.model||'')+'</div><div class="v-meta"><span><i class="fas fa-palette"></i> '+(v.color||'-')+'</span><span><i class="fas fa-user"></i> '+(v.seatCount||0)+'座</span><span>'+ (v.plateNumber||'-') +'</span></div><div class="v-footer"><div class="v-price">¥'+(v.dailyPrice||0)+'<small>/日</small></div></div></div></div>';
-    }).join('');return;}}}catch(e){}
-    c.innerHTML=[{b:'丰田',m:'凯美瑞',c:'黑色',s:5,p:350,pl:'粤A·88888'},{b:'宝马',m:'X5',c:'白色',s:5,p:680,pl:'粤B·66666'},{b:'特斯拉',m:'Model 3',c:'红色',s:5,p:520,pl:'粤C·12345'},{b:'本田',m:'雅阁',c:'银色',s:5,p:300,pl:'粤D·99999'},{b:'奔驰',m:'E级',c:'黑色',s:5,p:750,pl:'粤E·77777'},{b:'比亚迪',m:'汉EV',c:'蓝色',s:5,p:450,pl:'粤F·33333'}].map((v,i)=>'<div class="v-card"><div class="v-img">'+icons[i]+'</div><div class="v-body"><div class="v-name">'+v.b+'</div><div class="v-model">'+v.m+'</div><div class="v-meta"><span><i class="fas fa-palette"></i> '+v.c+'</span><span><i class="fas fa-user"></i> '+v.s+'座</span><span>'+v.pl+'</span></div><div class="v-footer"><div class="v-price">¥'+v.p+'<small>/日</small></div></div></div></div>').join('');
+  var c = document.getElementById('vehicleShowcase');
+  // 尝试从API加载
+  try {
+    var r = await fetch('/api/vehicle/list'), d = await r.json();
+    if (d.code === 200 && d.data) {
+      var v = d.data.filter(function(v){ return v.status === 'AVAILABLE'; }).slice(0, 6);
+      if (v.length > 0) { c.innerHTML = v.map(renderVehicleCard).join(''); return; }
+    }
+  } catch(e) {}
+  // 默认车辆数据（带CarImages图片）
+  var defaults = [
+    {b:'广汽丰田',m:'凯美瑞',c:'黑色',s:5,p:350,pl:'粤A·88888'},
+    {b:'保时捷',m:'保时捷911',c:'白色',s:4,p:1280,pl:'粤B·66666'},
+    {b:'特斯拉中国',m:'Model Y',c:'红色',s:5,p:520,pl:'粤C·12345'},
+    {b:'广汽本田',m:'奥德赛',c:'银色',s:7,p:420,pl:'粤D·99999'},
+    {b:'比亚迪',m:'大唐',c:'灰色',s:5,p:380,pl:'粤E·77777'},
+    {b:'奔驰(进口)',m:'奔驰S级',c:'黑色',s:5,p:880,pl:'粤F·33333'}
+  ];
+  c.innerHTML = defaults.map(function(v){ return renderVehicleCard(v); }).join('');
 })();
 </script>
 </body>

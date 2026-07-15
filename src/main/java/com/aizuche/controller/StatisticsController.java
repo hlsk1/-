@@ -14,7 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/statistics")
@@ -57,13 +60,37 @@ public class StatisticsController {
 
     @GetMapping("/orderTrend")
     public Result orderTrend() {
-        // 返回近7天的订单趋势
-        return Result.success("订单趋势数据");
+        List<Order> allOrders = orderService.findAll();
+        // 按日期聚合近14天订单数
+        Map<String, Long> dailyCount = new LinkedHashMap<>();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        for (int i = 13; i >= 0; i--) {
+            dailyCount.put(today.minusDays(i).toString(), 0L);
+        }
+        for (Order o : allOrders) {
+            if (o.getCreateTime() != null) {
+                String date = o.getCreateTime().toLocalDate().toString();
+                dailyCount.computeIfPresent(date, (k, v) -> v + 1);
+            }
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("dates", dailyCount.keySet());
+        result.put("counts", dailyCount.values());
+        return Result.success(result);
     }
 
     @GetMapping("/vehicleUtilization")
     public Result vehicleUtilization() {
-        // 返回车辆出租率
-        return Result.success("车辆出租率数据");
+        long total = vehicleService.findAll().size();
+        long rented = vehicleService.countByStatus("RENTED");
+        long available = vehicleService.countByStatus("AVAILABLE");
+        long repair = vehicleService.countByStatus("REPAIR");
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", total);
+        result.put("rented", rented);
+        result.put("available", available);
+        result.put("repair", repair);
+        result.put("utilizationRate", total > 0 ? Math.round((double) rented / total * 100) : 0);
+        return Result.success(result);
     }
 }
