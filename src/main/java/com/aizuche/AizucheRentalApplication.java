@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class AizucheRentalApplication {
     public static void main(String[] args) {
         SpringApplication.run(AizucheRentalApplication.class, args);
-        System.out.println("🚗 爱租车汽车租赁管理系统启动成功！");
-        System.out.println("📊 访问地址: http://localhost:8081/login.html");
+        System.out.println("爱租车汽车租赁管理系统启动成功！");
+        System.out.println("访问地址: http://localhost:8081/login.html");
     }
 }
