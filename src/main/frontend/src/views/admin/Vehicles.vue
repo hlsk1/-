@@ -238,12 +238,7 @@ const UPLOAD_FILES = [
 ]
 
 function getVehicleImg(v) {
-  if (v.imageUrls) {
-    if (Array.isArray(v.imageUrls) && v.imageUrls[0]) return v.imageUrls[0]
-    const first = v.imageUrls.split(',')[0]?.trim()
-    if (first) return first
-  }
-  // Fallback: random uploads image
+  // 统一使用本地 uploads/vehicles 文件夹下的真实车辆图片
   const idx = (v.id || 1) % UPLOAD_FILES.length
   return `/uploads/vehicles/${UPLOAD_FILES[idx]}`
 }

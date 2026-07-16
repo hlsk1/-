@@ -32,7 +32,7 @@
           :key="i"
           class="hero__bg-img"
           :class="{ 'hero__bg-img--active': i === currentImageIndex }"
-          :style="{ backgroundImage: `url('/CarImages/${img}')` }"
+          :style="{ backgroundImage: `url('/uploads/vehicles/${img}')` }"
         ></div>
       </div>
       <div class="hero__overlay"></div>
@@ -323,26 +323,12 @@ import { vehicleApi } from '@/api'
    Car images for hero slider
 ----------------------------------------------- */
 const CAR_IMAGES = [
-  '超跑CLUB第313季：限量打造800台 Aventador_38.jpg',
-  '超跑CLUB第314季：如此强悍的敞篷跑车 法拉利812_37.jpg',
-  '超跑CLUB第315季：赛道上的狠角色 奥迪R8_36.jpg',
-  '超跑CLUB第316季：历久恒新 保时捷911_35.jpg',
-  '超跑CLUB第317季：尽显锐利锋芒 宝马i8_34.jpg',
-  '超跑CLUB第318季：赛车之魂蓄势待发 宝马M8_33.jpg',
-  '超跑CLUB第319季：独特的风格和气质 Roma_32.jpg',
-  '超跑CLUB第320季：如利刃般刺破空气 Gemera_31.jpg',
-  '超跑CLUB第321季：超凡性能与至尊奢华 AMG GT_30.jpg',
-  '超跑CLUB第322季：令人臣服的澎湃动力 RS7_29.jpg',
-  '超跑CLUB第323季：匠心设计 欧陆GT_28.jpg',
-  '超跑CLUB第324季：驾驶典范 阿斯顿·马丁DB11_27.jpg',
-  '超跑CLUB第325季：性能猛兽 科尔维特C8_26.jpg',
-  '超跑CLUB第326季：陆地飞行器 Lotus Evija_25.jpg',
-  '超跑CLUB第327季：大成之作 阿斯顿·马丁DBS_24.jpg',
-  '超跑CLUB第327季：开启新纪元 迈凯伦Artura_19.jpg',
-  '超跑CLUB第328季：精益求精 保时捷911_23.jpg',
-  '超跑CLUB第329季：动感而优雅 法拉利Portofino_22.jpg',
-  '超跑CLUB第330季：开启电动化篇章 法拉利296GTB_21.jpg',
-  '超跑CLUB第331季：创势而行大步奔驰 奔驰AMGGT_20.jpg'
+  '20260714_0ea2c5b3.jpg','20260714_292125e4.jpg','20260714_3c12e78e.jpg',
+  '20260714_4f342939.jpg','20260714_58b3de9c.jpg','20260714_5a18ba75.jpg',
+  '20260714_6ba438a6.jpg','20260714_826103fa.jpg','20260714_8f852483.jpg',
+  '20260714_94293e3d.jpg','20260714_9bfc047b.jpg','20260714_b8a0dfb1.jpg',
+  '20260714_c2b7012e.jpg','20260714_d00dd179.jpg','20260714_ec01e985.jpg',
+  '20260714_fb841242.jpg'
 ]
 
 /* -----------------------------------------------
@@ -431,19 +417,11 @@ function getFirstImageUrl(imageUrls) {
 
 function randomCarImage(id) {
   const idx = (id || 1) % CAR_IMAGES.length
-  return `/CarImages/${CAR_IMAGES[idx]}`
+  return `/uploads/vehicles/${CAR_IMAGES[idx]}`
 }
 
 function resolveVehicleImage(vehicle) {
-  const firstUrl = getFirstImageUrl(vehicle.imageUrls)
-  if (firstUrl) return firstUrl
-  if (vehicle.imageUrl) return vehicle.imageUrl
-  // Try to find a match in CAR_IMAGES
-  for (const img of CAR_IMAGES) {
-    if (vehicle.brand && img.includes(vehicle.brand)) return `/CarImages/${img}`
-    if (vehicle.model && img.includes(vehicle.model)) return `/CarImages/${img}`
-  }
-  // Fallback: random image so every card has a picture
+  // 统一使用本地 uploads/vehicles 文件夹下的真实车辆图片
   return randomCarImage(vehicle.id)
 }
 

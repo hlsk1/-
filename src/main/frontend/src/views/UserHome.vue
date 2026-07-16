@@ -496,12 +496,6 @@ const UPLOAD_FILES = [
   '20260714_fb841242.jpg'
 ]
 
-function getFirstImageUrl(imageUrls) {
-  if (!imageUrls) return ''
-  if (Array.isArray(imageUrls)) return imageUrls[0] || ''
-  return imageUrls.split(',')[0]?.trim() || ''
-}
-
 async function loadVehicles() {
   vehicleLoading.value = true
   try {
@@ -509,9 +503,8 @@ async function loadVehicles() {
     availableVehicles.value = (res.data || [])
       .filter(v => v.status === 'AVAILABLE')
       .map(v => {
-        const firstUrl = getFirstImageUrl(v.imageUrls)
         const idx = (v.id || 1) % UPLOAD_FILES.length
-        return { ...v, imageUrl: firstUrl || `/uploads/vehicles/${UPLOAD_FILES[idx]}` }
+        return { ...v, imageUrl: `/uploads/vehicles/${UPLOAD_FILES[idx]}` }
       })
   } catch { showToast('加载车辆数据失败', 'error') }
   finally { vehicleLoading.value = false }

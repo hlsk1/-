@@ -56,13 +56,7 @@ const UPLOAD_FILES = [
 ]
 
 const vehicleImage = computed(() => {
-  const urls = props.vehicle.imageUrls
-  if (urls) {
-    if (Array.isArray(urls) && urls[0]) return urls[0]
-    const first = urls.split(',')[0]?.trim()
-    if (first) return first
-  }
-  // Fallback: random uploads image
+  // 统一使用本地 uploads/vehicles 文件夹下的真实车辆图片
   const idx = (props.vehicle.id || 1) % UPLOAD_FILES.length
   return `/uploads/vehicles/${UPLOAD_FILES[idx]}`
 })
