@@ -92,22 +92,42 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="o in orders" :key="o.id" @click="showOrderDetail(o)">
-                <td>{{ o.orderNo }}</td>
-                <td>{{ o.vehicleBrand }} {{ o.vehicleModel }}</td>
-                <td>{{ fmtTime(o.pickupTime) }}</td>
-                <td>{{ fmtTime(o.returnTime) }}</td>
-                <td>{{ o.rentDays ?? '-' }}</td>
-                <td>&yen;{{ o.deposit ?? 0 }}</td>
-                <td>&yen;{{ o.totalAmount ?? 0 }}</td>
-                <td><span class="uh-badge" :class="orderStatusBadgeCls(o.status)">{{ orderStatusLabel(o.status) }}</span></td>
-                <td @click.stop>
-                  <div class="uh-actions">
-                    <button v-if="o.status === 'PENDING'" class="uh-btn uh-btn--sm uh-btn--warning" @click="cancelOrder(o)">取消</button>
-                    <button v-if="o.status === 'COMPLETED'" class="uh-btn uh-btn--sm uh-btn--primary" @click="goReview(o)">评价</button>
-                  </div>
-                </td>
-              </tr>
+              <template v-for="(o, idx) in orders" :key="o.id">
+                <tr
+                  :style="{ background: idx % 2 === 0 ? '#ffffff' : '#f5f5f5' }"
+                  @click="showOrderDetail(o)"
+                >
+                  <td><strong>{{ o.orderNo }}</strong></td>
+                  <td>{{ o.vehicleBrand }} {{ o.vehicleModel }}<br><span style="font-size:11px;color:#999;">{{ o.vehiclePlate }}</span></td>
+                  <td>{{ fmtTime(o.pickupTime) }}</td>
+                  <td>{{ fmtTime(o.returnTime) }}</td>
+                  <td>{{ o.rentDays ?? '-' }}天</td>
+                  <td>&yen;{{ o.depositAmount ?? 0 }}</td>
+                  <td style="font-weight:600;">&yen;{{ o.finalAmount || o.totalAmount || 0 }}</td>
+                  <td><span class="uh-badge" :class="orderStatusBadgeCls(o.status)">{{ orderStatusLabel(o.status) }}</span></td>
+                  <td @click.stop>
+                    <div class="uh-actions">
+                      <button v-if="o.status === 'PENDING'" class="uh-btn uh-btn--sm uh-btn--warning" @click="cancelOrder(o)">取消</button>
+                      <button v-if="o.status === 'COMPLETED' && !reviewedOrderIds.has(o.id)" class="uh-btn uh-btn--sm uh-btn--accent" style="background:#d97706;" @click="goReview(o)">去评价</button>
+                      <button v-if="o.status === 'COMPLETED' && reviewedOrderIds.has(o.id)" class="uh-btn uh-btn--sm review-toggle-btn" @click="toggleReviewDetail(o.id)">评价详情</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr
+                  v-if="o.status === 'COMPLETED' && reviewedOrderIds.has(o.id) && expandedReviews.has(o.id)"
+                  :style="{ background: idx % 2 === 0 ? '#ffffff' : '#f5f5f5' }"
+                >
+                  <td :colspan="9" style="padding:0;border-top:none;">
+                    <div class="review-detail-cell">
+                      <div class="review-detail-cell__top">
+                        <span class="review-detail-cell__stars">{{ starsHtml(reviewMap[o.id]?.rating) }}</span>
+                        <span class="review-detail-cell__time">🕐 {{ fmtTime(reviewMap[o.id]?.createTime) }}</span>
+                      </div>
+                      <p class="review-detail-cell__content">{{ reviewMap[o.id]?.content || '（无内容）' }}</p>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
           <div v-else class="uh-empty">暂无订单记录</div>
@@ -322,7 +342,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { customerApi, orderApi, vehicleApi, violationApi } from '@/api'
+import { customerApi, orderApi, reviewApi, vehicleApi, violationApi } from '@/api'
 
 const router = useRouter()
 const user = JSON.parse(sessionStorage.getItem('user') || 'null')
@@ -336,6 +356,19 @@ if (!user) {
 function fmtTime(t) {
   if (!t) return '-'
   return t.replace('T', ' ').substring(0, 16)
+}
+
+function starsHtml(rating) {
+  let s = ''
+  for (let i = 1; i <= 5; i++) s += i <= (rating || 0) ? '⭐' : '☆'
+  return s
+}
+
+function toggleReviewDetail(orderId) {
+  const next = new Set(expandedReviews.value)
+  if (next.has(orderId)) next.delete(orderId)
+  else next.add(orderId)
+  expandedReviews.value = next
 }
 
 const ORDER_STATUS = {
@@ -384,6 +417,11 @@ const orderLoading = ref(false)
 const vehicleLoading = ref(false)
 const violationLoading = ref(false)
 
+// 评价相关状态
+const reviewedOrderIds = ref(new Set())
+const reviewMap = reactive({})
+const expandedReviews = ref(new Set())
+
 const customerPoints = computed(() => customer.value?.points ?? 0)
 const pendingViolations = computed(() => violations.value.filter(v => v.status !== 'RESOLVED').length)
 
@@ -402,6 +440,42 @@ async function loadOrders() {
     orders.value = res.data || []
   } catch { showToast('加载订单失败', 'error') }
   finally { orderLoading.value = false }
+}
+
+async function loadReviews() {
+  // 清除旧数据
+  reviewedOrderIds.value = new Set()
+  Object.keys(reviewMap).forEach(k => delete reviewMap[k])
+  // 第1步：按客户ID查评价
+  if (customer.value?.id) {
+    try {
+      const res = await reviewApi.byCustomer(customer.value.id)
+      if (res.code === 200 && res.data) {
+        res.data.forEach(rv => {
+          if (rv.orderId) {
+            const s = new Set(reviewedOrderIds.value); s.add(rv.orderId); reviewedOrderIds.value = s
+            reviewMap[rv.orderId] = rv
+          }
+        })
+      }
+    } catch { /* ignore */ }
+  }
+  // 第2步：兜底——对未命中且已完成的订单，并行查评价详情
+  const unchecked = orders.value.filter(o => o.status === 'COMPLETED' && !reviewedOrderIds.value.has(o.id))
+  if (unchecked.length > 0) {
+    const results = await Promise.all(unchecked.map(o =>
+      reviewApi.byOrder(o.id).then(d => {
+        if (d.code === 200 && d.data) return d.data
+        return null
+      }).catch(() => null)
+    ))
+    results.forEach(rv => {
+      if (rv && rv.orderId) {
+        const s = new Set(reviewedOrderIds.value); s.add(rv.orderId); reviewedOrderIds.value = s
+        reviewMap[rv.orderId] = rv
+      }
+    })
+  }
 }
 
 async function loadViolations() {
@@ -445,6 +519,7 @@ async function loadVehicles() {
 
 async function fetchAll() {
   await Promise.all([loadCustomer(), loadOrders(), loadViolations()])
+  await loadReviews()
 }
 
 // ---------- logout ----------
@@ -707,6 +782,30 @@ onMounted(() => {
 .uh-link:hover { color: #1677ff; }
 .uh-profile-form { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
 .uh-profile-form h4 { margin: 0 0 16px; font-size: 16px; font-weight: 600; color: #1a1a1a; }
+
+/* ===== Review Detail Row ===== */
+.review-toggle-btn {
+  background: #fff !important;
+  color: #16a34a !important;
+  border: 1px solid #16a34a !important;
+}
+.review-toggle-btn:hover { background: #f0fdf4 !important; }
+.review-detail-cell {
+  background: #f0fdf4;
+  border-left: 3px solid #16a34a;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 0 6px 6px 0;
+}
+.review-detail-cell__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.review-detail-cell__stars { font-size: 1rem; }
+.review-detail-cell__time { font-size: 12px; color: #666; }
+.review-detail-cell__content { margin: 0; line-height: 1.6; color: #333; }
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {

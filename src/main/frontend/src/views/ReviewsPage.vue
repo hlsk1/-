@@ -348,6 +348,7 @@ const submitting = ref(false)
 const modalOrderId = ref('')
 const modalOrderNo = ref('')
 const modalVehicleId = ref('')
+const modalCustomerId = ref('')
 const modalBrand = ref('')
 const modalModel = ref('')
 
@@ -357,6 +358,7 @@ function openModalFromQuery() {
     modalOrderId.value = q.orderId || ''
     modalOrderNo.value = q.orderNo || ''
     modalVehicleId.value = q.vehicleId || ''
+    modalCustomerId.value = q.customerId || ''
     modalBrand.value = q.brand || ''
     modalModel.value = q.model || ''
     showModal.value = true
@@ -395,6 +397,7 @@ async function submitReview() {
   submitting.value = true
   try {
     const res = await reviewApi.add({
+      customerId: modalCustomerId.value || null,
       orderId: modalOrderId.value,
       orderNo: modalOrderNo.value,
       vehicleId: modalVehicleId.value,

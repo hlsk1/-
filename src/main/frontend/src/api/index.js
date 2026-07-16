@@ -96,6 +96,7 @@ export const reviewApi = {
   popular: () => $get('/api/review/popular'),
   byVehicle: (vehicleId) => $get(`/api/review/vehicle/${vehicleId}`),
   byCustomer: (customerId) => $get(`/api/review/customer/${customerId}`),
+  byOrder: (orderId) => $get(`/api/review/order/${orderId}`),
   check: (orderId) => $get(`/api/review/check/${orderId}`),
   add: (data) => $post('/api/review/add', data),
   like: (id) => $post(`/api/review/like/${id}`),
