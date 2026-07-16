@@ -185,11 +185,16 @@ switchTab('user')
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  background: #fff;
+  background: #f3f4f6;
 }
 .auth-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  padding: 2.5rem 2rem;
 }
 .tabs {
   display: flex;

@@ -364,7 +364,17 @@ function starsHtml(rating) {
   return s
 }
 
-function toggleReviewDetail(orderId) {
+async function toggleReviewDetail(orderId) {
+  // reviewMap 里没数据时，从全部评价列表里匹配加载
+  if (!reviewMap[orderId]) {
+    try {
+      const res = await reviewApi.list()
+      if (res.code === 200 && res.data) {
+        const rv = res.data.find(r => r.orderId === orderId)
+        if (rv) reviewMap[orderId] = rv
+      }
+    } catch { /* ignore */ }
+  }
   const next = new Set(expandedReviews.value)
   if (next.has(orderId)) next.delete(orderId)
   else next.add(orderId)
@@ -436,8 +446,14 @@ async function loadCustomer() {
 async function loadOrders() {
   orderLoading.value = true
   try {
-    const res = await orderApi.list({ customerName: user.realName })
-    orders.value = res.data || []
+    const custName = customer.value?.name || user.realName || user.username
+    const res = await orderApi.list({ customerName: custName })
+    // 按下单时间倒序：最新的在最上面
+    orders.value = (res.data || []).sort((a, b) => {
+      const ta = a.createTime || a.pickupTime || ''
+      const tb = b.createTime || b.pickupTime || ''
+      return tb.localeCompare(ta)
+    })
   } catch { showToast('加载订单失败', 'error') }
   finally { orderLoading.value = false }
 }
@@ -446,36 +462,19 @@ async function loadReviews() {
   // 清除旧数据
   reviewedOrderIds.value = new Set()
   Object.keys(reviewMap).forEach(k => delete reviewMap[k])
-  // 第1步：按客户ID查评价
-  if (customer.value?.id) {
-    try {
-      const res = await reviewApi.byCustomer(customer.value.id)
-      if (res.code === 200 && res.data) {
-        res.data.forEach(rv => {
-          if (rv.orderId) {
-            const s = new Set(reviewedOrderIds.value); s.add(rv.orderId); reviewedOrderIds.value = s
-            reviewMap[rv.orderId] = rv
-          }
-        })
-      }
-    } catch { /* ignore */ }
-  }
-  // 第2步：兜底——对未命中且已完成的订单，并行查评价详情
-  const unchecked = orders.value.filter(o => o.status === 'COMPLETED' && !reviewedOrderIds.value.has(o.id))
-  if (unchecked.length > 0) {
-    const results = await Promise.all(unchecked.map(o =>
-      reviewApi.byOrder(o.id).then(d => {
-        if (d.code === 200 && d.data) return d.data
-        return null
-      }).catch(() => null)
-    ))
-    results.forEach(rv => {
-      if (rv && rv.orderId) {
-        const s = new Set(reviewedOrderIds.value); s.add(rv.orderId); reviewedOrderIds.value = s
-        reviewMap[rv.orderId] = rv
-      }
-    })
-  }
+  // 从 t_review 表拉全部评价，筛选出属于当前用户订单的
+  try {
+    const res = await reviewApi.list()
+    if (res.code === 200 && res.data) {
+      const myOrderIds = new Set(orders.value.map(o => o.id))
+      res.data.forEach(rv => {
+        if (rv.orderId && myOrderIds.has(rv.orderId)) {
+          const s = new Set(reviewedOrderIds.value); s.add(rv.orderId); reviewedOrderIds.value = s
+          reviewMap[rv.orderId] = rv
+        }
+      })
+    }
+  } catch { /* ignore */ }
 }
 
 async function loadViolations() {
@@ -511,8 +510,9 @@ async function loadVehicles() {
 }
 
 async function fetchAll() {
-  await Promise.all([loadCustomer(), loadOrders(), loadViolations()])
-  await loadReviews()
+  await loadCustomer()                               // 必须先拿到客户信息
+  await Promise.all([loadOrders(), loadViolations()]) // 订单依赖 customer.name
+  await loadReviews()                                 // 评价依赖 customer.id + orders
 }
 
 // ---------- logout ----------

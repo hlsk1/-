@@ -17,7 +17,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "(:endTime IS NULL OR o.pickupTime <= :endTime) AND " +
             "(:status IS NULL OR o.status = :status) AND " +
             "(:customerName IS NULL OR o.customerName LIKE %:customerName%) AND " +
-            "(:vehiclePlate IS NULL OR o.vehiclePlate LIKE %:vehiclePlate%)")
+            "(:vehiclePlate IS NULL OR o.vehiclePlate LIKE %:vehiclePlate%) " +
+            "ORDER BY o.createTime DESC")
     List<Order> findByConditions(@Param("startTime") LocalDateTime startTime,
                                  @Param("endTime") LocalDateTime endTime,
                                  @Param("status") String status,
