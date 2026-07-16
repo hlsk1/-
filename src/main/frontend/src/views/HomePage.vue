@@ -28,7 +28,7 @@
     <section id="hero" class="hero">
       <div class="hero__bg">
         <div
-          v-for="(img, i) in CAR_IMAGES"
+          v-for="(img, i) in heroImages"
           :key="i"
           class="hero__bg-img"
           :class="{ 'hero__bg-img--active': i === currentImageIndex }"
@@ -36,6 +36,14 @@
         ></div>
       </div>
       <div class="hero__overlay"></div>
+
+      <!-- Left/Right Arrows -->
+      <button class="hero__arrow hero__arrow--left" @click="prevSlide" aria-label="上一张">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button class="hero__arrow hero__arrow--right" @click="nextSlide" aria-label="下一张">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
 
       <div class="hero__content">
         <div class="hero__badge">🚗 专业汽车租赁 · 值得信赖</div>
@@ -71,7 +79,7 @@
 
       <div class="hero__dots">
         <button
-          v-for="(img, i) in CAR_IMAGES"
+          v-for="(img, i) in heroImages"
           :key="i"
           class="hero__dot"
           :class="{ 'hero__dot--active': i === currentImageIndex }"
@@ -308,25 +316,33 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { vehicleApi } from '@/api'
 
 /* -----------------------------------------------
    Car images for hero slider
 ----------------------------------------------- */
 const CAR_IMAGES = [
-  '上汽通用五菱 星光730新能源_15.jpg',
-  '保时捷 保时捷911_8.jpg',
-  '方程豹 钛7_13.jpg',
-  '比亚迪 大唐_14.jpg',
-  '特斯拉中国 Model Y_12.jpg',
-  '长城汽车 坦克300_11.jpg',
-  '零跑汽车 零跑A10_10.jpg',
-  '广汽丰田 凯美瑞_4.jpg',
-  '吉利汽车 星愿_2.jpg',
-  '广汽本田 奥德赛_16.jpg',
-  '奔驰(进口) 奔驰S级_6.jpg',
-  '广汽丰田 赛那SIENNA_7.jpg'
+  '超跑CLUB第313季：限量打造800台 Aventador_38.jpg',
+  '超跑CLUB第314季：如此强悍的敞篷跑车 法拉利812_37.jpg',
+  '超跑CLUB第315季：赛道上的狠角色 奥迪R8_36.jpg',
+  '超跑CLUB第316季：历久恒新 保时捷911_35.jpg',
+  '超跑CLUB第317季：尽显锐利锋芒 宝马i8_34.jpg',
+  '超跑CLUB第318季：赛车之魂蓄势待发 宝马M8_33.jpg',
+  '超跑CLUB第319季：独特的风格和气质 Roma_32.jpg',
+  '超跑CLUB第320季：如利刃般刺破空气 Gemera_31.jpg',
+  '超跑CLUB第321季：超凡性能与至尊奢华 AMG GT_30.jpg',
+  '超跑CLUB第322季：令人臣服的澎湃动力 RS7_29.jpg',
+  '超跑CLUB第323季：匠心设计 欧陆GT_28.jpg',
+  '超跑CLUB第324季：驾驶典范 阿斯顿·马丁DB11_27.jpg',
+  '超跑CLUB第325季：性能猛兽 科尔维特C8_26.jpg',
+  '超跑CLUB第326季：陆地飞行器 Lotus Evija_25.jpg',
+  '超跑CLUB第327季：大成之作 阿斯顿·马丁DBS_24.jpg',
+  '超跑CLUB第327季：开启新纪元 迈凯伦Artura_19.jpg',
+  '超跑CLUB第328季：精益求精 保时捷911_23.jpg',
+  '超跑CLUB第329季：动感而优雅 法拉利Portofino_22.jpg',
+  '超跑CLUB第330季：开启电动化篇章 法拉利296GTB_21.jpg',
+  '超跑CLUB第331季：创势而行大步奔驰 奔驰AMGGT_20.jpg'
 ]
 
 /* -----------------------------------------------
@@ -355,16 +371,28 @@ function scrollToTop() {
 /* -----------------------------------------------
    Hero image slider
 ----------------------------------------------- */
+const heroImages = computed(() => CAR_IMAGES.slice(0, 6))
 const currentImageIndex = ref(0)
 let sliderTimer = null
 
 function nextSlide() {
-  currentImageIndex.value = (currentImageIndex.value + 1) % CAR_IMAGES.length
+  currentImageIndex.value = (currentImageIndex.value + 1) % heroImages.value.length
+  resetSliderTimer()
+}
+
+function prevSlide() {
+  currentImageIndex.value = (currentImageIndex.value - 1 + heroImages.value.length) % heroImages.value.length
+  resetSliderTimer()
 }
 
 function goToSlide(index) {
   currentImageIndex.value = index
   resetSliderTimer()
+}
+
+function resetSliderTimer() {
+  stopSlider()
+  sliderTimer = setInterval(nextSlide, 4000)
 }
 
 function startSlider() {
@@ -377,11 +405,6 @@ function stopSlider() {
     clearInterval(sliderTimer)
     sliderTimer = null
   }
-}
-
-function resetSliderTimer() {
-  stopSlider()
-  startSlider()
 }
 
 /* -----------------------------------------------
@@ -406,6 +429,11 @@ function getFirstImageUrl(imageUrls) {
   return imageUrls.split(',')[0]?.trim() || ''
 }
 
+function randomCarImage(id) {
+  const idx = (id || 1) % CAR_IMAGES.length
+  return `/CarImages/${CAR_IMAGES[idx]}`
+}
+
 function resolveVehicleImage(vehicle) {
   const firstUrl = getFirstImageUrl(vehicle.imageUrls)
   if (firstUrl) return firstUrl
@@ -415,7 +443,8 @@ function resolveVehicleImage(vehicle) {
     if (vehicle.brand && img.includes(vehicle.brand)) return `/CarImages/${img}`
     if (vehicle.model && img.includes(vehicle.model)) return `/CarImages/${img}`
   }
-  return ''
+  // Fallback: random image so every card has a picture
+  return randomCarImage(vehicle.id)
 }
 
 async function fetchVehicles() {
@@ -427,13 +456,13 @@ async function fetchVehicles() {
       const available = res.data.filter(v => v.status === 'AVAILABLE')
       const top6 = available.slice(0, 6)
       displayVehicles.value = top6.map(v => ({
-        id: v.id || v.vehicleId,
+        id: v.id,
         brand: v.brand || '未知品牌',
         model: v.model || '',
         color: v.color || '',
-        seatCount: v.seatCount || v.seats || 5,
-        plate: v.plate || v.licensePlate || '',
-        pricePerDay: v.pricePerDay ?? v.dailyRate ?? v.price ?? 299,
+        seatCount: v.seatCount || 5,
+        plate: v.plateNumber || '',
+        pricePerDay: v.dailyPrice || 299,
         image: resolveVehicleImage(v)
       }))
     } else {
@@ -844,6 +873,40 @@ onUnmounted(() => {
   background: var(--accent, #f59e0b);
   border-color: var(--accent, #f59e0b);
   transform: scale(1.3);
+}
+
+/* Hero Arrows */
+.hero__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s;
+  backdrop-filter: blur(4px);
+}
+.hero__arrow:hover {
+  background: rgba(0,0,0,0.5);
+  border-color: rgba(255,255,255,0.6);
+  transform: translateY(-50%) scale(1.1);
+}
+.hero__arrow--left { left: 24px; }
+.hero__arrow--right { right: 24px; }
+
+@media (max-width: 768px) {
+  .hero__arrow { width: 36px; height: 36px; font-size: 0.75rem; }
+  .hero__arrow--left { left: 12px; }
+  .hero__arrow--right { right: 12px; }
 }
 
 /* ================================================

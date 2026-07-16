@@ -151,8 +151,34 @@
             <input v-model="form.parkingTime" type="datetime-local" class="form-input" />
           </div>
           <div class="form-group">
-            <label>图片URL</label>
-            <input v-model="imageUrlInput" class="form-input" placeholder="多个URL用逗号分隔" />
+            <label>车辆图片</label>
+            <div class="upload-area" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleDrop">
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/*"
+                multiple
+                style="display:none"
+                @change="handleFileSelect"
+              />
+              <div v-if="uploadedUrls.length > 0" class="upload-previews">
+                <div v-for="(url, i) in uploadedUrls" :key="i" class="upload-preview-item">
+                  <img :src="url" class="upload-preview-img" />
+                  <button class="upload-preview-remove" @click.stop="removeUploadedUrl(i)">&times;</button>
+                </div>
+                <div class="upload-preview-item upload-add-btn" @click.stop="triggerFileInput">
+                  <span>+</span>
+                </div>
+              </div>
+              <div v-else class="upload-placeholder">
+                <i class="fa fa-cloud-upload"></i>
+                <span>点击或拖拽图片到此处上传</span>
+                <small>支持 JPG/PNG，可多选</small>
+              </div>
+            </div>
+            <div v-if="uploading" class="upload-status">
+              <i class="fa fa-spinner fa-spin"></i> 上传中...
+            </div>
           </div>
           <div class="form-group">
             <label>描述</label>
@@ -172,7 +198,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { vehicleApi } from '@/api'
+import { vehicleApi, uploadApi } from '@/api'
 
 const STATUS_MAP = { AVAILABLE: '可用', RENTED: '已租', REPAIR: '维修中', OFFLINE: '下架' }
 const statusMap = (s) => STATUS_MAP[s] || s
@@ -197,13 +223,29 @@ const modalVisible = ref(false)
 const isEdit = ref(false)
 const editId = ref(null)
 const submitting = ref(false)
-const imageUrlInput = ref('')
+const uploading = ref(false)
+const fileInputRef = ref(null)
+const uploadedUrls = ref([])
 const toast = reactive({ show: false, msg: '', type: 'success' })
 
+const UPLOAD_FILES = [
+  '20260714_0ea2c5b3.jpg','20260714_292125e4.jpg','20260714_3c12e78e.jpg',
+  '20260714_4f342939.jpg','20260714_58b3de9c.jpg','20260714_5a18ba75.jpg',
+  '20260714_6ba438a6.jpg','20260714_826103fa.jpg','20260714_8f852483.jpg',
+  '20260714_94293e3d.jpg','20260714_9bfc047b.jpg','20260714_b8a0dfb1.jpg',
+  '20260714_c2b7012e.jpg','20260714_d00dd179.jpg','20260714_ec01e985.jpg',
+  '20260714_fb841242.jpg'
+]
+
 function getVehicleImg(v) {
-  if (!v.imageUrls) return ''
-  if (Array.isArray(v.imageUrls)) return v.imageUrls[0] || ''
-  return v.imageUrls.split(',')[0]?.trim() || ''
+  if (v.imageUrls) {
+    if (Array.isArray(v.imageUrls) && v.imageUrls[0]) return v.imageUrls[0]
+    const first = v.imageUrls.split(',')[0]?.trim()
+    if (first) return first
+  }
+  // Fallback: random uploads image
+  const idx = (v.id || 1) % UPLOAD_FILES.length
+  return `/uploads/vehicles/${UPLOAD_FILES[idx]}`
 }
 
 const filteredVehicles = computed(() => {
@@ -247,9 +289,9 @@ function resetForm() {
   form.status = 'AVAILABLE'
   form.parkingSpot = ''
   form.parkingTime = ''
-  form.imageUrls = ''
   form.description = ''
-  imageUrlInput.value = ''
+  uploadedUrls.value = []
+  uploading.value = false
 }
 
 async function loadVehicles() {
@@ -288,13 +330,63 @@ function openEditModal(v) {
   form.parkingSpot = v.parkingSpot || ''
   form.parkingTime = v.parkingTime ? v.parkingTime.substring(0, 16) : ''
   form.description = v.description || ''
-  imageUrlInput.value = (v.imageUrls && Array.isArray(v.imageUrls)) ? v.imageUrls.join(',') : (v.imageUrls || '')
+  // Populate existing images
+  if (v.imageUrls) {
+    if (Array.isArray(v.imageUrls)) {
+      uploadedUrls.value = [...v.imageUrls]
+    } else if (typeof v.imageUrls === 'string' && v.imageUrls.trim()) {
+      uploadedUrls.value = v.imageUrls.split(',').map(s => s.trim()).filter(Boolean)
+    } else {
+      uploadedUrls.value = []
+    }
+  } else {
+    uploadedUrls.value = []
+  }
   modalVisible.value = true
 }
 
 function closeModal() {
   modalVisible.value = false
   resetForm()
+}
+
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+function handleFileSelect(e) {
+  const files = e.target.files
+  if (files && files.length > 0) {
+    uploadFiles(Array.from(files))
+  }
+}
+
+function handleDrop(e) {
+  const files = e.dataTransfer?.files
+  if (files && files.length > 0) {
+    uploadFiles(Array.from(files))
+  }
+}
+
+async function uploadFiles(files) {
+  uploading.value = true
+  try {
+    const res = await uploadApi.images(files)
+    if (res.code === 200 && res.data?.urls) {
+      uploadedUrls.value = [...uploadedUrls.value, ...res.data.urls]
+      showToast(`成功上传 ${res.data.urls.length} 张图片`)
+    } else {
+      showToast(res.msg || '上传失败', 'error')
+    }
+  } catch {
+    showToast('上传失败', 'error')
+  } finally {
+    uploading.value = false
+  }
+}
+
+function removeUploadedUrl(index) {
+  uploadedUrls.value.splice(index, 1)
 }
 
 async function handleSubmit() {
@@ -306,7 +398,7 @@ async function handleSubmit() {
   try {
     const data = {
       ...form,
-      imageUrls: imageUrlInput.value ? imageUrlInput.value.split(',').map(s => s.trim()).filter(Boolean) : []
+      imageUrls: uploadedUrls.value.join(',')
     }
     let res
     if (isEdit.value) {
@@ -514,4 +606,46 @@ onMounted(() => {
 }
 .form-input:focus { border-color: #4096ff; }
 .form-textarea { min-height: 80px; resize: vertical; }
+
+/* Upload area */
+.upload-area {
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-height: 100px;
+}
+.upload-area:hover { border-color: #4096ff; }
+.upload-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; color: #999; padding: 20px 0;
+}
+.upload-placeholder i { font-size: 28px; }
+.upload-placeholder small { font-size: 12px; color: #bbb; }
+.upload-previews {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.upload-preview-item {
+  width: 100px; height: 100px; border-radius: 6px;
+  overflow: hidden; position: relative;
+  border: 1px solid #e8e8e8;
+}
+.upload-preview-img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.upload-preview-remove {
+  position: absolute; top: 2px; right: 2px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,0.5); color: #fff;
+  font-size: 14px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.upload-add-btn {
+  display: flex; align-items: center; justify-content: center;
+  background: #fafafa; border: 1px dashed #d9d9d9;
+  font-size: 32px; color: #bbb; cursor: pointer;
+}
+.upload-add-btn:hover { border-color: #4096ff; color: #4096ff; }
+.upload-status { margin-top: 8px; font-size: 13px; color: #4096ff; }
 </style>

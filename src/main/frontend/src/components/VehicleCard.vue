@@ -46,11 +46,25 @@ const props = defineProps({
   },
 })
 
+const UPLOAD_FILES = [
+  '20260714_0ea2c5b3.jpg','20260714_292125e4.jpg','20260714_3c12e78e.jpg',
+  '20260714_4f342939.jpg','20260714_58b3de9c.jpg','20260714_5a18ba75.jpg',
+  '20260714_6ba438a6.jpg','20260714_826103fa.jpg','20260714_8f852483.jpg',
+  '20260714_94293e3d.jpg','20260714_9bfc047b.jpg','20260714_b8a0dfb1.jpg',
+  '20260714_c2b7012e.jpg','20260714_d00dd179.jpg','20260714_ec01e985.jpg',
+  '20260714_fb841242.jpg'
+]
+
 const vehicleImage = computed(() => {
   const urls = props.vehicle.imageUrls
-  if (!urls) return ''
-  if (Array.isArray(urls)) return urls[0] || ''
-  return urls.split(',')[0]?.trim() || ''
+  if (urls) {
+    if (Array.isArray(urls) && urls[0]) return urls[0]
+    const first = urls.split(',')[0]?.trim()
+    if (first) return first
+  }
+  // Fallback: random uploads image
+  const idx = (props.vehicle.id || 1) % UPLOAD_FILES.length
+  return `/uploads/vehicles/${UPLOAD_FILES[idx]}`
 })
 </script>
 

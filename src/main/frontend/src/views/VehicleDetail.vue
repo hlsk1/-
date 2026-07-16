@@ -256,9 +256,21 @@ function getFirstImageUrl(imageUrls) {
   return imageUrls.split(',')[0]?.trim() || ''
 }
 
+const UPLOAD_FILES = [
+  '20260714_0ea2c5b3.jpg','20260714_292125e4.jpg','20260714_3c12e78e.jpg',
+  '20260714_4f342939.jpg','20260714_58b3de9c.jpg','20260714_5a18ba75.jpg',
+  '20260714_6ba438a6.jpg','20260714_826103fa.jpg','20260714_8f852483.jpg',
+  '20260714_94293e3d.jpg','20260714_9bfc047b.jpg','20260714_b8a0dfb1.jpg',
+  '20260714_c2b7012e.jpg','20260714_d00dd179.jpg','20260714_ec01e985.jpg',
+  '20260714_fb841242.jpg'
+]
+
 const vehicleImage = computed(() => {
   if (!vehicle.value) return ''
-  return getFirstImageUrl(vehicle.value.imageUrls) || getFirstImageUrl(vehicle.value.imageUrl)
+  const first = getFirstImageUrl(vehicle.value.imageUrls) || getFirstImageUrl(vehicle.value.imageUrl)
+  if (first) return first
+  const idx = (vehicle.value.id || 1) % UPLOAD_FILES.length
+  return `/uploads/vehicles/${UPLOAD_FILES[idx]}`
 })
 
 /* -----------------------------------------------
